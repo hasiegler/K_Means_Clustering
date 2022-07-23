@@ -1,0 +1,17 @@
+---
+title: "K-Means"
+author: "Henry Siegler"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r}
+
+```
+
+
