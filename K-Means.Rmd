@@ -15,64 +15,314 @@ library(tidyverse)
 library(gganimate)
 ```
 
+### Understanding K-Means Clustering
+
+If you are unfamiliar with K-means clustering, please read this section. K-means clustering is a popular unsupervised machine learning algorithm that groups data points together in a fixed number (k) of clusters in the dataset. In K-means clustering, you decide on the number k, which is the number of centroids, or cluster centers, the algorithm will find in the dataset.
+
+The K-means algorithm starts with randomly selecting k centroids to use as starting points for each of the clusters. Then, for every data point, look at which centroid it is nearest to and assign the data point to that centroid. For each centroid, move that centroid to the average of the points assigned to that centroid. Once again, the algorithm finds which centroid each data point is closest to. The algorithm stops once the centroid assignments no longer change, which is when the algorithm has "converged".
+
+### Creating the K-means Clustering Algorithm from Scratch
+
 ```{r}
-k_means <- function(dat, k, pca = FALSE) {
+k_means <- function(data, k, pca = FALSE) {
 
     if(pca == TRUE){
-        dat <- princomp(dat)
-        dat <- dat$scores %>%
+        data <- princomp(data)
+        data <- data$scores %>%
             as.data.frame() %>%
             select(Comp.1, Comp.2)
     }
     
     #randomly select the indices of k rows to use as starting
     #centers of the k clusters
-    rand <- sample(1:nrow(dat), k)
+    rand <- sample(1:nrow(data), k)
 
-    #dataframe with k observations that were randomly selected
-    clusters <- dat[rand,]
+    #data frame with k observations that were randomly selected
+    clusters <- data[rand,]
 
+    #empty vectors that will contain the cluster assignments for each observation
     cluster_vec <- c()
     last_vec <- c(0)
-    d_mins <- c()
+    
+    #iteration counter
     iter <- 0
+    
+    #algorithm will stop once stop is equal to 1
     stop <- 0
 
     while (stop == 0) {
 
         iter <- iter + 1
 
-        for (i in 1:nrow(dat)) {
-
-            dist <- dat[i,] %>%
+        #loop through each observation
+        for (i in 1:nrow(data)) {
+    
+            #find the euclidean distance of the ith observation to each of the clusters
+            dist <- data[i,] %>%
                 rbind(clusters) %>%
                 dist()
-
+            
+            #find which cluster the ith observation has the smallest distance with
             i_cluster <- dist[1:k] %>%
                 which.min()
 
+            #add the cluster assignment for the ith observation to a vector
+            #containing the cluster assignments of all observations
             cluster_vec[i] <- i_cluster
 
         }
 
+        #check to see if the cluster assignments have changed at all since
+        #the last iteration
         if (all(cluster_vec == last_vec)) {
             stop <-  1
         }
 
+        #save the cluster assignments from this iteration to another object
+        #so we can check to see if cluster assignments changed
         last_vec <- cluster_vec
 
-        clusters <- dat %>%
+        #group the observations into their assigned clusters and find the means
+        #of all the columns to use as the new cluster centers
+        clusters <- data %>%
             cbind(cluster_vec) %>%
             group_by(cluster_vec) %>%
             summarize_all(mean)
 
+        #remove the first column that contains the cluster number
         clusters <- clusters[, -1]
+        
+        if (stop == 1) {
+            sizes <- data %>% 
+                cbind(cluster_vec) %>% 
+                count(cluster_vec) %>% 
+                pull(n)
+            
+        clusters <- data %>%
+            cbind(cluster_vec) %>%
+            group_by(cluster_vec) %>%
+            summarize_all(mean)
+        
+        }
 
     }
 
-    list <- list('Clustering vector' = cluster_vec)
-    return(list)
+    result <- list("Sizes" = sizes, 
+                   "Cluster Means" = clusters,
+                   "Clustering Vector" = cluster_vec,
+                   "Iterations" = iter)
+    return(result)
 }
 ```
+
+### Using the k_means Function
+
+To demonstrate how the function created above works, we will use the well-known iris dataset as an example. The function only works with data frames that only contain numeric variables, so the Species column is removed.
+
+```{r}
+iris2 <- iris %>% 
+    select(-Species)
+
+head(iris2)
+```
+
+The k-means algorithm randomly selects k observations to use as the starting points, which means that the final cluster assignments can be different depending on which cluster centroids are randomly selected first. We use the set seed function to make sure the results stay the same for the examples.
+
+```{r}
+set.seed(23)
+k_means(data = iris2, k = 3)
+```
+
+In the output of the function, we can see that the k-means algorithm converged with clusters of sizes 50, 62, and 38 observations. The cluster means for the three clusters are displayed in the form of a tibble. The clustering vector is a vector of which cluster each observation belongs to, and it is in order of the original data frame observations. Finally, the number of iterations displays the number of times the algorithm changed the cluster centroids before convergence. In this example, the algorithm took 6 iterations. 
+
+### Visualizing the Results
+
+In the previous example, we used all 4 numeric variables in the iris dataset, so it is difficult to show how the cluster assignments compare graphically. In this example, we only use Sepal.Length and Petal.Length, so we can show the results on a scatterplot.
+
+```{r}
+iris3 <- iris %>% 
+    select(Sepal.Length, Petal.Length)
+
+head(iris3)
+```
+```{r}
+set.seed(78)
+result <- k_means(iris3, 3)
+result
+```
+
+```{r}
+#save the clustering assignments to an object
+assignments <- result$`Clustering Vector`
+
+iris3 %>% 
+    cbind(assignments) %>% 
+    ggplot(aes(x = Sepal.Length, y = Petal.Length, color = as.factor(assignments))) + 
+    geom_point() + 
+    theme_bw() + 
+    labs(color = "Cluster")
+```
+
+Using only Sepal.Length and Petal.Length to create the cluster assignments using the K-means algorithm, we can see that the cluster assignments make sense. For example, observations in cluster 1 are close together in terms of euclidean distance as well as on the scatterplot, and those observations have larger values for Petal.Length and Sepal.Length.
+
+#Visualizing the K-Means Algorithm in Action
+
+In order to create an animated graph that shows the cluster assignments on each iteration, we must create another modified K-means function that saves the cluster means and assignments of each iteration.
+
+```{r}
+k_means_iterations <- function(data, k, pca = FALSE) {
+
+    if(pca == TRUE){
+        data <- princomp(data)
+        data <- data$scores %>%
+            as.data.frame() %>%
+            select(Comp.1, Comp.2)
+    }
+    
+    #randomly select the indices of k rows to use as starting
+    #centers of the k clusters
+    rand <- sample(1:nrow(data), k)
+
+    #data frame with k observations that were randomly selected
+    clusters <- data[rand,]
+
+    #empty vectors that will contain the cluster assignments for each observation
+    cluster_vec <- c()
+    last_vec <- c(0)
+    
+    #iteration counter
+    iter <- 1
+    
+    #algorithm will stop once stop is equal to 1
+    stop <- 0
+    
+    #create empty data frame that will contain all the assignments for every iteration
+    all_df <- data.frame()
+    
+    #create empty data frames that will contain the centroids for every iteration
+    all_center_df <- data.frame()
+
+    while (stop == 0) {
+
+        #loop through each observation
+        for (i in 1:nrow(data)) {
+    
+            #find the euclidean distance of the ith observation to each of the clusters
+            dist <- data[i,] %>%
+                rbind(clusters) %>%
+                dist()
+            
+            #find which cluster the ith observation has the smallest distance with
+            i_cluster <- dist[1:k] %>%
+                which.min()
+
+            #add the cluster assignment for the ith observation to a vector
+            #containing the cluster assignments of all observations
+            cluster_vec[i] <- i_cluster
+
+        }
+
+        #check to see if the cluster assignments have changed at all since
+        #the last iteration
+        if (all(cluster_vec == last_vec)) {
+            stop <-  1
+        }
+
+        #save the cluster assignments from this iteration to another object
+        #so we can check to see if cluster assignments changed
+        last_vec <- cluster_vec
+        
+        df <- data %>%
+            add_column(cluster = cluster_vec) %>%
+            add_column(iteration = iter)
+
+        center_df <- clusters %>%
+            add_column(cluster = c(1:k)) %>%
+            add_column(iteration = iter)
+
+        all_df <- rbind(all_df, df)
+
+        all_center_df <- rbind(all_center_df, center_df)
+
+
+        #group the observations into their assigned clusters and find the means
+        #of all the columns to use as the new cluster centers
+        clusters <- data %>%
+            cbind(cluster_vec) %>%
+            group_by(cluster_vec) %>%
+            summarize_all(mean)
+
+        #remove the first column that contains the cluster number
+        clusters <- clusters[, -1]
+        
+        df <- data.frame()
+        center_df <- data.frame()
+        iter <- iter + 1
+        
+        if (stop == 1) {
+            sizes <- data %>% 
+                cbind(cluster_vec) %>% 
+                count(cluster_vec) %>% 
+                pull(n)
+            
+        clusters <- data %>%
+            cbind(cluster_vec) %>%
+            group_by(cluster_vec) %>%
+            summarize_all(mean)
+        
+        }
+
+    }
+
+    result <- list("Sizes" = sizes, 
+                   "Cluster Means" = clusters,
+                   "Clustering Vector" = cluster_vec,
+                   "Iterations" = iter,
+                   "All Assignments" = all_df,
+                   "All Centroids" = all_center_df)
+    return(result)
+}
+```
+
+```{r}
+result <- k_means_iterations(iris3, 3)
+graph_df <- result$`All Assignments`
+centers_df <- result$`All Centroids`
+```
+
+```{r}
+graph_df %>% 
+  ggplot(aes(x = Sepal.Length,
+             y = Petal.Length, 
+             color = as.factor(cluster))) + 
+  geom_point() + 
+  geom_point(data = centers_df, size = 5, shape = 10) + 
+  transition_states(iteration, transition_length = 0, state_length = 10) + 
+  labs(title = "Iteration: {closest_state}",
+       color = "Cluster")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
