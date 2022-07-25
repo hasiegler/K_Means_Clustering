@@ -1,5 +1,5 @@
 ---
-title: "K-Means"
+title: "K-Means Function from Scratch and Animated Visualization"
 author: "Henry Siegler"
 output: html_document
 ---
@@ -19,13 +19,14 @@ library(gganimate)
 
 If you are unfamiliar with K-means clustering, please read this section. K-means clustering is a popular unsupervised machine learning algorithm that groups data points together in a fixed number (k) of clusters in the dataset. In K-means clustering, you decide on the number k, which is the number of centroids, or cluster centers, the algorithm will find in the dataset.
 
-The K-means algorithm starts with randomly selecting k centroids to use as starting points for each of the clusters. Then, for every data point, look at which centroid it is nearest to and assign the data point to that centroid. For each centroid, move that centroid to the average of the points assigned to that centroid. Once again, the algorithm finds which centroid each data point is closest to. The algorithm stops once the centroid assignments no longer change, which is when the algorithm has "converged".
+The K-means algorithm starts with randomly selecting k centroids to use as starting points for each of the clusters. Then, for every data point, the algorithm determines which centroid it is nearest to (in terms of Euclidean distance) and assigns the data point to that centroid. After each data point has been assigned to its nearest centroid, the centroids change to be the average of the points that were just assigned to that centroid. The algorithm then finds which centroid each data point is closest to, and this process keeps on repeating. The algorithm stops once the centroid assignments no longer change, which is when the algorithm has "converged".
 
 ### Creating the K-means Clustering Algorithm from Scratch
 
 ```{r}
 k_means <- function(data, k, pca = FALSE) {
 
+    #option for Principal Component Analysis
     if(pca == TRUE){
         data <- princomp(data)
         data <- data$scores %>%
@@ -45,14 +46,12 @@ k_means <- function(data, k, pca = FALSE) {
     last_vec <- c(0)
     
     #iteration counter
-    iter <- 0
+    iter <- 1
     
     #algorithm will stop once stop is equal to 1
     stop <- 0
 
     while (stop == 0) {
-
-        iter <- iter + 1
 
         #loop through each observation
         for (i in 1:nrow(data)) {
@@ -92,6 +91,8 @@ k_means <- function(data, k, pca = FALSE) {
         #remove the first column that contains the cluster number
         clusters <- clusters[, -1]
         
+        iter <- iter + 1
+        
         if (stop == 1) {
             sizes <- data %>% 
                 cbind(cluster_vec) %>% 
@@ -117,7 +118,7 @@ k_means <- function(data, k, pca = FALSE) {
 
 ### Using the k_means Function
 
-To demonstrate how the function created above works, we will use the well-known iris dataset as an example. The function only works with data frames that only contain numeric variables, so the Species column is removed.
+To demonstrate how the function created above works, we will use the well-known __iris__ dataset as an example. The function only works with data frames that only contain numeric variables, so the __Species__ column is removed.
 
 ```{r}
 iris2 <- iris %>% 
@@ -126,18 +127,19 @@ iris2 <- iris %>%
 head(iris2)
 ```
 
-The k-means algorithm randomly selects k observations to use as the starting points, which means that the final cluster assignments can be different depending on which cluster centroids are randomly selected first. We use the set seed function to make sure the results stay the same for the examples.
+The K-means algorithm randomly selects k observations to use as the starting points, which means that the final cluster assignments can be different depending on which cluster centroids are randomly selected first. We use the __set.seed()__ function to make sure the results stay the same for the examples.
 
 ```{r}
 set.seed(23)
 k_means(data = iris2, k = 3)
 ```
 
-In the output of the function, we can see that the k-means algorithm converged with clusters of sizes 50, 62, and 38 observations. The cluster means for the three clusters are displayed in the form of a tibble. The clustering vector is a vector of which cluster each observation belongs to, and it is in order of the original data frame observations. Finally, the number of iterations displays the number of times the algorithm changed the cluster centroids before convergence. In this example, the algorithm took 6 iterations. 
+In the output of the function, we can see that the K-means algorithm converged with clusters of sizes 50, 62, and 38 observations. The cluster means for the three clusters are displayed in the form of a tibble. The clustering vector is a vector of which cluster each observation belongs to, and it is in order of the original data frame observations. Finally, the number of iterations displays the number of times the algorithm changed the cluster centroids before convergence. In this example, the algorithm took 7 iterations. 
 
 ### Visualizing the Results
 
-In the previous example, we used all 4 numeric variables in the iris dataset, so it is difficult to show how the cluster assignments compare graphically. In this example, we only use Sepal.Length and Petal.Length, so we can show the results on a scatterplot.
+In the previous example, we used all 4 numeric variables in the 
+__iris__ dataset, so it is difficult to show how well the cluster assignments were graphically. In this example, we only use __Sepal.Length__ and __Petal.Length__, so we can show the results on a scatterplot.
 
 ```{r}
 iris3 <- iris %>% 
@@ -163,15 +165,16 @@ iris3 %>%
     labs(color = "Cluster")
 ```
 
-Using only Sepal.Length and Petal.Length to create the cluster assignments using the K-means algorithm, we can see that the cluster assignments make sense. For example, observations in cluster 1 are close together in terms of euclidean distance as well as on the scatterplot, and those observations have larger values for Petal.Length and Sepal.Length.
+Using only __Sepal.Length__ and __Petal.Length__ to create the cluster assignments using the K-means algorithm, we can see that the cluster assignments make sense. For example, observations in cluster 1 are close together in terms of Euclidean distance as well as on the scatterplot, and those observations have larger values for __Petal.Length__ and __Sepal.Length__.
 
-#Visualizing the K-Means Algorithm in Action
+### Visualizing the K-Means Algorithm in Action
 
-In order to create an animated graph that shows the cluster assignments on each iteration, we must create another modified K-means function that saves the cluster means and assignments of each iteration.
+In order to create an animated graph that shows the cluster assignments on each iteration, we must create another modified K-means function that saves the centroids and all the assignments on every iteration.
 
 ```{r}
 k_means_iterations <- function(data, k, pca = FALSE) {
 
+    #option for Principal Component Analysis
     if(pca == TRUE){
         data <- princomp(data)
         data <- data$scores %>%
@@ -229,19 +232,25 @@ k_means_iterations <- function(data, k, pca = FALSE) {
         }
 
         #save the cluster assignments from this iteration to another object
-        #so we can check to see if cluster assignments changed
+        #so we can check to see if cluster assignments change in the next iteration
         last_vec <- cluster_vec
         
+        #save this iteration's clustering vector and original data to a new data frame
         df <- data %>%
             add_column(cluster = cluster_vec) %>%
             add_column(iteration = iter)
 
+        #save this iteration's centroids to a new data frame with the iteration number too
         center_df <- clusters %>%
             add_column(cluster = c(1:k)) %>%
             add_column(iteration = iter)
 
+        #add this iteration's cluster assignments to the data frame containing all the
+        #assignments of all previous iterations
         all_df <- rbind(all_df, df)
 
+        #add this iteration's centroids to the data frame containing all the 
+        #centroids of all the previous iterations
         all_center_df <- rbind(all_center_df, center_df)
 
 
@@ -255,10 +264,14 @@ k_means_iterations <- function(data, k, pca = FALSE) {
         #remove the first column that contains the cluster number
         clusters <- clusters[, -1]
         
+        #clear the data frames containing information on only the current iteration
         df <- data.frame()
         center_df <- data.frame()
+        
+        #add to the iteration counter
         iter <- iter + 1
         
+        #find sizes and clusters once the algorithm is finished
         if (stop == 1) {
             sizes <- data %>% 
                 cbind(cluster_vec) %>% 
@@ -284,13 +297,20 @@ k_means_iterations <- function(data, k, pca = FALSE) {
 }
 ```
 
+
 ```{r}
-result <- k_means_iterations(iris3, 3)
+set.seed(54)
+#call the function with k equal to 3
+result <- k_means_iterations(data = iris3, k = 3)
+
+#save the tibble with all of the assignments to a new data frame
 graph_df <- result$`All Assignments`
+#save the tibble with all the centroids to a new data frame
 centers_df <- result$`All Centroids`
 ```
 
 ```{r}
+#use the results to make an animated graph of the assignments on each iteration
 graph_df %>% 
   ggplot(aes(x = Sepal.Length,
              y = Petal.Length, 
@@ -299,30 +319,7 @@ graph_df %>%
   geom_point(data = centers_df, size = 5, shape = 10) + 
   transition_states(iteration, transition_length = 0, state_length = 10) + 
   labs(title = "Iteration: {closest_state}",
-       color = "Cluster")
+       color = "Cluster") + 
+  theme_bw()
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+In the graph above, we can see how the K-means clustering algorithm works. Using the __iris__ dataset with only the variables _Sepal.Length_ and _Petal.Length_, we run a K-means clustering algorithm. The K-means function clusters the observations into 3 clusters using only the variables _Sepal.Length_ and _Petal.Length_. In the first iteration, 3 random observations are chosen as the starting points for each of the 3 cluster centroids. Then, the distance to each of those 3 cluster centroids is calculated for each observation, and each observation is assigned to the closest cluster centroid. After the observations have been assigned to a cluster, the centroids of each of the three clusters are recalculated using the mean of all the observations in that cluster. The distance of each observation to the new cluster centroids are recalculated again and the process continues until convergence, or until the cluster centroids do not change anymore. This occurs after 8 iteration in this example above.

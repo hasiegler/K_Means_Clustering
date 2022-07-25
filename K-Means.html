@@ -12,7 +12,7 @@
 <meta name="author" content="Henry Siegler" />
 
 
-<title>K-Means</title>
+<title>K-Means Function from Scratch and Animated Visualization</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -362,7 +362,8 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">K-Means</h1>
+<h1 class="title toc-ignore">K-Means Function from Scratch and Animated
+Visualization</h1>
 <h4 class="author">Henry Siegler</h4>
 
 </div>
@@ -380,17 +381,20 @@ k, which is the number of centroids, or cluster centers, the algorithm
 will find in the dataset.</p>
 <p>The K-means algorithm starts with randomly selecting k centroids to
 use as starting points for each of the clusters. Then, for every data
-point, look at which centroid it is nearest to and assign the data point
-to that centroid. For each centroid, move that centroid to the average
-of the points assigned to that centroid. Once again, the algorithm finds
-which centroid each data point is closest to. The algorithm stops once
-the centroid assignments no longer change, which is when the algorithm
-has “converged”.</p>
+point, the algorithm determines which centroid it is nearest to (in
+terms of Euclidean distance) and assigns the data point to that
+centroid. After each data point has been assigned to its nearest
+centroid, the centroids change to be the average of the points that were
+just assigned to that centroid. The algorithm then finds which centroid
+each data point is closest to, and this process keeps on repeating. The
+algorithm stops once the centroid assignments no longer change, which is
+when the algorithm has “converged”.</p>
 </div>
 <div id="creating-the-k-means-clustering-algorithm-from-scratch" class="section level3">
 <h3>Creating the K-means Clustering Algorithm from Scratch</h3>
 <pre class="r"><code>k_means &lt;- function(data, k, pca = FALSE) {
 
+    #option for Principal Component Analysis
     if(pca == TRUE){
         data &lt;- princomp(data)
         data &lt;- data$scores %&gt;%
@@ -410,14 +414,12 @@ has “converged”.</p>
     last_vec &lt;- c(0)
     
     #iteration counter
-    iter &lt;- 0
+    iter &lt;- 1
     
     #algorithm will stop once stop is equal to 1
     stop &lt;- 0
 
     while (stop == 0) {
-
-        iter &lt;- iter + 1
 
         #loop through each observation
         for (i in 1:nrow(data)) {
@@ -457,6 +459,8 @@ has “converged”.</p>
         #remove the first column that contains the cluster number
         clusters &lt;- clusters[, -1]
         
+        iter &lt;- iter + 1
+        
         if (stop == 1) {
             sizes &lt;- data %&gt;% 
                 cbind(cluster_vec) %&gt;% 
@@ -482,9 +486,9 @@ has “converged”.</p>
 <div id="using-the-k_means-function" class="section level3">
 <h3>Using the k_means Function</h3>
 <p>To demonstrate how the function created above works, we will use the
-well-known iris dataset as an example. The function only works with data
-frames that only contain numeric variables, so the Species column is
-removed.</p>
+well-known <strong>iris</strong> dataset as an example. The function
+only works with data frames that only contain numeric variables, so the
+<strong>Species</strong> column is removed.</p>
 <pre class="r"><code>iris2 &lt;- iris %&gt;% 
     select(-Species)
 
@@ -496,11 +500,11 @@ head(iris2)</code></pre>
 ## 4          4.6         3.1          1.5         0.2
 ## 5          5.0         3.6          1.4         0.2
 ## 6          5.4         3.9          1.7         0.4</code></pre>
-<p>The k-means algorithm randomly selects k observations to use as the
+<p>The K-means algorithm randomly selects k observations to use as the
 starting points, which means that the final cluster assignments can be
 different depending on which cluster centroids are randomly selected
-first. We use the set seed function to make sure the results stay the
-same for the examples.</p>
+first. We use the <strong>set.seed()</strong> function to make sure the
+results stay the same for the examples.</p>
 <pre class="r"><code>set.seed(23)
 k_means(data = iris2, k = 3)</code></pre>
 <pre><code>## $Sizes
@@ -522,22 +526,23 @@ k_means(data = iris2, k = 3)</code></pre>
 ## [149] 3 2
 ## 
 ## $Iterations
-## [1] 6</code></pre>
-<p>In the output of the function, we can see that the k-means algorithm
+## [1] 7</code></pre>
+<p>In the output of the function, we can see that the K-means algorithm
 converged with clusters of sizes 50, 62, and 38 observations. The
 cluster means for the three clusters are displayed in the form of a
 tibble. The clustering vector is a vector of which cluster each
 observation belongs to, and it is in order of the original data frame
 observations. Finally, the number of iterations displays the number of
 times the algorithm changed the cluster centroids before convergence. In
-this example, the algorithm took 6 iterations.</p>
+this example, the algorithm took 7 iterations.</p>
 </div>
 <div id="visualizing-the-results" class="section level3">
 <h3>Visualizing the Results</h3>
-<p>In the previous example, we used all 4 numeric variables in the iris
-dataset, so it is difficult to show how the cluster assignments compare
-graphically. In this example, we only use Sepal.Length and Petal.Length,
-so we can show the results on a scatterplot.</p>
+<p>In the previous example, we used all 4 numeric variables in the
+<strong>iris</strong> dataset, so it is difficult to show how well the
+cluster assignments were graphically. In this example, we only use
+<strong>Sepal.Length</strong> and <strong>Petal.Length</strong>, so we
+can show the results on a scatterplot.</p>
 <pre class="r"><code>iris3 &lt;- iris %&gt;% 
     select(Sepal.Length, Petal.Length)
 
@@ -571,7 +576,7 @@ result</code></pre>
 ## [149] 1 3
 ## 
 ## $Iterations
-## [1] 4</code></pre>
+## [1] 5</code></pre>
 <pre class="r"><code>#save the clustering assignments to an object
 assignments &lt;- result$`Clustering Vector`
 
@@ -582,19 +587,23 @@ iris3 %&gt;%
     theme_bw() + 
     labs(color = &quot;Cluster&quot;)</code></pre>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAABXFBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZrYAujgzMzM6AAA6OgA6Ojo6OmY6OpA6Zjo6ZmY6ZpA6ZrY6kJA6kLY6kNtNTU1NTW5NTY5Nbm5Nbo5NbqtNjshhnP9mAABmADpmOgBmOjpmOpBmZjpmZmZmZpBmkGZmkJBmkLZmkNtmtttmtv9uTU1ubk1ubo5ujqtujshuq+SOTU2Obk2Obm6Oq6uOyOSOyP+QOgCQOjqQZjqQZmaQkDqQkGaQkLaQtraQttuQ2/+rbk2rjm6ryOSr5P+2ZgC2Zjq2Zma2kDq2kGa2kJC2tra2ttu229u22/+2///Ijk3Ijm7Iq27IyKvI5P/I///bkDrbkGbbtmbbtpDbtrbbttvb27bb29vb2//b///kq27kyI7kyKvk5Mjk///r6+v4dm3/tmb/yI7/25D/27b/29v/5Kv/5Mj/5OT//7b//8j//9v//+T///+MdtJUAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO2di5dj1Xln1ebRFCRjGFM4tunAuB0T3IljkkkIzGT8iJvYQ4xxBrchYwOZMfQDmKbQ/7/W6Pm1qurTlepIV9+WtPdaNt2l0q1f/XTPbumec+8dDEVEpIlBdQARkX1FgYqINKJARUQaUaAiIo0oUBGRRhSoiEgjClREpBEFKiLSiAIVEWlEgYqINKJARUQaUaAiIo0oUBGRRrYq0KdERLbCNs3UH9sV6DY31sUnu/pBK/mEE8VacjhRbCUjb0WB9gn91S+Ck4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKDBU5+IiGzOcQp0mxvrgv7PZxGcLKRaOFFsJcN3oIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKPvfyqcjthxEgT5CgdbCyUKqhRNl71v59NMeDKpAAwVaCycLqRZOlH1v5dNP+zCoAg0UaC2cLKRaOFH2vJVPP+3FoAo0UKC1cLKQauFE2fNWFGiCAt0M0piwlhROlD1vRYEmKNDNII0Ja0nhRNnzVhRoggLdDNKYsJYUTpR9b8VJpMso0M0gjQlrSeFE2ftWXMZ0CQW6GaQxYS0pnCj734oL6S+iQDeDNCasJYUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwomy/614RfqLKNDNII0Ja0nhRNn7Vrwn0iUU6GaQxoS1pHCi7Hsr3pXzMgp0M0hjwlpSOFH2vBXvC5+gQDeDNCasJYUTZc9bUaAJCnQzSGPCWlI4Ufa8FQWaoEA3gzQmrCWFE2XPW1GgCQp0M0hjwlpSOFH2vRUnkS6jQDeDNCasJYUTZe9bcRnTJRToZpDGhLWkcKLsfysupL+IAt0M0piwlhROFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJsh+t9HGcswsFGijQWjhZSLVwouxFK73MtHcmUaBzFGgtnCykWjhR9qGVftZ6diZRoHMUaC2cLKRaOFH2oJWezjbqTKJA5yjQWjhZSLVwouxBKwr0iijQzSCNCWtJ4UTZg1YU6BVRoJtBGhPWksKJsgetKNArokA3gzQmrCWFE2UfWnES6Woo0M0gjQlrSeFE2YtWXMZ0JRToZpDGhLWkcKLsRysupL8KCnQzSGPCWlI4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UY62lc5rNCvQQIHWwslCqoUT5Vhb6b5LiAINFGgtnCykWjhRjrSVFfepU6CBAq2Fk4VUCyfKcbay6k7JCjRQoLVwspBq4UQ5zlYU6Noo0Fo4WUi1cKIcZysKdG0UaC2cLKRaOFGOsxUFujYKtBZOFlItnChH2oqTSOuiQGvhZCHVwolyrK24jGlNFGgtnCykWjhRjrYVF9KvhwKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKJsv5XO2ZlO6K0o0D6hv/pFcLKQauFE2Xor3euDurNsOUo7CjRQoLVwspBq4UTZdisrVqh3Z9lulA1QoIECrYWThVQLJ8qWW1l1jmR3lq1G2QQFGijQWjhZSLVwoijQDAUaKNBaOFlItXCiKNAMBRoo0Fo4WUi1cKIo0AwFGijQWjhZSLVwojiJlKFAAwVaCycLqRZOFJcxZSjQQIHWwslCqoUTxYX0GQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEaWyl8arJ3U/baZROFGigQGvhZCHVwonS1krjfTtWPG2XUbpRoIECrYWThVQLJ0pTK413jlv1tB1GWYECDRRoLZwspFo4UVpaabx38cqn7S7KKhRooEBr4WQh1cKJokDTJAp0jgKthZOFVAsnigJNkyjQOQq0Fk4WUi2cKAo0TaJA5yjQWjhZSLVwojiJlCZRoHMUaC2cLKRaOFFcxpQmUaBzFGgtnCykWjhRXEifoUADBVoLJwupFk4UW8k4QoF+9Ztbp6d/9veXvq5Aa+FkIdXCiWIrGccn0C9eO53wNxcfUKC1cLKQauFEsZWMoxPoVz89/dZ7w6/+7fSFn194RIHWwsmy/Vraj77tfSt9HHjEt3LAAr13+s3fjv/78el3LjyiQGvhZNl6LRvM/+57K71MfeNbOVyBjt6A/sOShxRoLZws265lkxWIe95KP4sv8a0crkC/fG36BjRBgdbCybLlWjY6B2a/W+np9B98K4cr0M9vffuP//FXp6ff+uf40lNzPhHpgUcWqU6yc471Vz9ogf5sOgv/o/mXFKj0yrFa5JPj/dUPV6D3xguY/jj86jfOwg/9CL8EP8Jn+BE+49g+wt+bv/V811l4BboEJ5EynETKODaBfn5r9s5zfDD0/EMKtBZOFpcxZbiMKeP4BDqbhY8/BAq0Fk4WF9JnuJA+49gE+tVPZ+9A7536DlSB5pBq4USxlYxjE2gc+3z30TT8DAVaCycLqRZOFFvJODqBfn7r9IfvOQs/hTQmrCWFE8VWMo5OoMN7tybLQF+4dEanAq2Fk4VUCyeKrWQcn0CHX/xspNC/fu/S1xVoLZwspFo481kdrfQyUdQF5wU6QoEuQ4HWwslCqoWzomp5K/0sVerMsssf1okCDRRoLZwspFo4a/qXttLTYvnOLDv8Wd0o0ECB1sLJQqqFc1bpslb6Ol2zM8vuftQKFGigQGvhZCHVokDTLLv7UStQoIECrYWThVSLAk2z7O5HrUCBBgq0Fk4WUi0KNM2yux+1AgUaKNBaOFlItTiJlGbZ4c/qRoEGCrQWThZSLS5jSrPs8od1okADBVoLJwupFhfSZ3BeIAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwunlsaDi/1cBb6tFa9ID0aBbgbHFENrSWic3u5nVtx7ImUo0ECB1sLJQqmlcYFlT+syvStnhgINFGgtnCyQWhpP8enrzCDvC5+hQAMFWgsnC6QWBbo8y3Y3twEKNFCgtXCyQGpRoMuzbHdzG6BAAwVaCycLpBYFujzLdje3AQo0UKC1cLJQanESaWmWLW+vHQUaKNBaOFkwtTTKpxdnuYwpRYEGCrQWThZOLY3y6cNZLqRPUaCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBqaZ652frz9r6VXlCggQKthZOFVEv72qFtP2/fW+kHBRoo0Fo4WUi1bLB6fcvP2/NWekKBBgq0Fk4WUi1Xj9J69s+q5+13K32hQAMFWgsnC6kWBZrBiaJAAwVaCycLqRYFmsGJokADBVoLJwupFgWawYmiQAMFWgsnC6kWJ5EyOFEUaKBAa+FkIdXiMqYMThQFGijQWjhZSLW4kD6DE0WBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwsnSUUsPVzju3uROj4F2QtpZOFEUaKBAa+FkWV5L4/x219NWbHKXs/DdkHYWThQFGijQWjhZltbSuMKy62mrNrnDdaArIO0snCgKNFCgtXCyLKul8Ryfrqet3OTuzkRaBWln4URRoIECrYWTRYGmSTgvEH5fUaB9Qn/1i+BkUaBpEs4LhN9XFGif0F/9IjhZFGiahPMC4fcVBdon9Fe/CE4WJ5HSJJwXCL+vKNA+ob/6RXCyuIwpTcJ5gfD7igLtE/qrXwQniwvpM0g7CyeKAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwsmy21raJ5i2/uM6Ie0snCgKNFCgtXCy7LSWDZY4bfvHdUPaWThRFGigQGvhZNllLZssst/yj1sBaWfhRFGggQKthZNlh7VsdJrndn/cKkg7CyeKAg0UaC2cLAo0g7SzcKIo0ECB1sLJokAzSDsLJ4oCDRRoLZwsCjSDtLNwoijQQIHWwsniJFIGaWfhRFGggQKthZPFZUwZpJ2FE0WBBgq0Fk4WF9JnkHYWThQFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCydLWy09HK8c7riVzl+BtLNwoijQQIHWwsnSVEsPM+aTLFvf4nK6fwXSzsKJokADBVoLJ0tLLT2s2Zxm2fYGl7PiVyDtLJwoCjRQoLVwsjTU0sNZQ7MsW97eclb9CqSdhRNFgQYKtBZOFgWaJuG8QPh9RYH2Cf3VL4KTRYGmSTgvEH5fUaB9Qn/1i+BkUaBpEs4LhN9XFGif0F/9IjhZnERKk3BeIPy+okD7hP7qF8HJ4jKmNAnnBcLvKwq0T+ivfhGcLC6kzyDtLJwoCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFs4FlY+3lW44URRooEBr4WTB3NJjeLStrIATRYEGCrQWThbKTeUmWXYXZQWknYUTRYEGCrQWThbIbY2nWXYWZRWknYUTRYEGCrQWThYFmkHaWThRFGigQGvhZFGgGaSdhRNFgQYKtBZOFgWaQdpZOFEUaKBAa+FkcRIpg7SzcKIo0ECB1sLJ4jKmDNLOwomiQAMFWgsniwvpM0g7CyeKAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVNL40Wa+7k2PqYV/r6iQPuE/uoXwcmCqaXxNiE93Z2J0sqQv68o0D6hv/pFcLJQamm8UV1f9weFtDKGE0WBBgq0Fk4WSC2Nt0ru6w7LkFYmcKIo0ECB1sLJAqlFgS6FE0WBBgq0Fk4WSC0KdCmcKAo0UKC1cLJAalGgS+FEUaCBAq2Fk4VSi5NIy+BEUaCBAq2FkwVTi8uYlsCJokADBVoLJwunFhfS53CiKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLVvP8uKIbT/WSOusTi+zQY0/jrSzcKIo0ECB1rLtLC++uNyErY810rquqJ/1SI0/jrSzcKIo0ECB1rLlLC++uNyErY810rqyvacV8Y0/jrSzcKIo0ECB1rLdLC++uNyErY810npuZV/nZDb+ONLOwomiQAMFWosC3dLzGlGgLSjQQIHWokC39LxGFGgLCjRQoLUo0C09rxEF2oICDRRoLU4ibet5jTiJ1IACDRRoLS5j2trzGun+caSdhRNFgQYKtBYX0m/veY10/jjSzsKJokADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGtpytLD8co+ttm+yaZWejl0StpZOFEUaKBAa2nJ0sOMeR/b3GCTLa30M3lP2lk4URRooEBracjSw5rNPra5ySYbWulp+ShpZ+FEUaCBAq3l6ll6OGuoj21utMmrt9LXCUyknYUTRYEGCrQWBZqhQDM4URRo8NQnsl88MhN6m33E7OCRQHfy4yThOAW6zY11Qf/nswjfgWb4DjSDE8V3oIECrcVJpAwnkTI4URRooEBrcRlThsuYMjhRFGigQGtxIX2GC+kzOFEUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLUuz9HGcs5OOWhqz7PgYaCteUPnKKNBAgdayLEsfM+0rknS6vCHLjmfhW/GWHldHgQYKtJYlWfpY67kqSbfLr5xlx+tAW/Gmcg0o0ECB1pJn6eNso5VJVrj8ill2fCZSK97WuAUFGijQWhRomqXhOW0o0BYUaKBAa1GgaZaG57ShQFtQoIECrUWBplkantOGAm1BgQYKtBYnkdIsLU9qw0mkBhRooEBrcRlTmqXpWW24jOnqKNBAgdbiQvo0S9vT2nAh/ZVRoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtew0S9dByZ0f5+xi6600X2yZtLNwoijQQIHWssssXdPiu59p72LbrbTf7oO0s3CiKNBAgdaywyxdCzML1np2seVWNrjhHGln4URRoIECrWV3WbpODao426iL7bayyS2PSTsLJ4oCDRRoLQo0Q4FmcKIo0ECB1qJAMxRoBieKAg0UaC0KNEOBZnCiKNBAgdbiJFKGk0gZnCgKNFCgtbiMKcNlTBmcKAo0UKC1uJA+w4X0GZwoCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOlr2/oHIfh2Obj532AX1fUaB9Qn/1i+Bk2fdbevSxIKB99r4P6PuKAu0T+qtfBCfLnt9Uro8lqRusH+0D+r6iQPuE/uoXwcmy37c17uOkqE3OYOoD+r6iQPuE/uoXwcmiQC+iQJehQAMFWgsniwK9iAJdhgINFGgtnCwK9CIKdBkKNFCgtXCyOIl0CZY/8fuKAu0T+qtfBCeLy5gug/Infl9RoH1Cf/WL4GRxIX0CyZ/4fUWB9gn91S+Ck4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZtj+J1ErXj9txFNTOwomiQAMFWgsny9aXMbXS9eN2HIW1s3CiKNBAgdbCybLthfStdP24HUcZsnYWThQFGijQWjhZtnwqZytdP27HUcaQdhZOFAUaKNBaOFkUaAZpZ+FEUaCBAq2Fk0WBZpB2Fk6U7Qn0gzdOBoPBn/z4o9nfbw+e+KjzCVtAgW4GaUzsQS0KlAInyrYE+sHTgxnXXp1+ZU2Bvv+nG2hWgW4GaUzsQy1OIkHgRNmSQO8MFnh+8qX1BLrZ+1QFuhmkMbEXtexYWl0/btf+RO0snCjbEejYn4+98uHoT79/efQe9CfjrynQZdBf/SI4WVxIn0HaWThRtiLQ+yeDwXNzD45kOnGiAl0G/dUvgpOFVAsniq1kbEWgtweDJxf/NnkLqkCXQX/1i+BkIdXCiWIrGdsQ6MMbs0/tU+7/yfffGc7VOHpsekh09M70a78e//fBbLZ++rVHB00nX7/27DuTbz57ffCDD14aDB77ybCLLoH+Yc6Ha/4aCrQWThZSLZwotpKxDYHePfcGdM4Sgb4/n2p6/NfnBBrTUM+Nv3kk0Jvjv0ydu5RlAj17Y2FOa8U2ggMVaNehsh2Pie6jdp0zN22bbKNxm61RGlvZOQo0YxsCvTOfeD9HLtD7J4MnRm8yz34xk+78I/xoG+M3n5+9NTXoSKDjd7UPftz9k5cIdPRDFeiMzsna3Y6JFfPG3WuHmjbZROM2W6M0trJ7FGjGlgT6g8tfzQU6/yA/enjyh5lAR159cv5t48MBY4Em27zIEoGOAj32/bfn/OuaB1kPUqDdywV3OiZWrVxcsXq9ZZMtNG6zNUpjKwUo0IzdC/TaTy5/1yOvjtX55OT/13njmAt0uokrc4gCXXHCyi7HxIooy2rpetrKTfYRc6tPa22lAgWasWuB3h1PFP3q4nctKm/yldEX1pmdzwX68Ma17rmnHAVaGUWB5tBVUQMnypYmkdY+Bjp8a3JccrrqfvG7zh+0XPNN5DKBrnvY8xwKtDKKAs2hq6IGTpRtCHQ8MbT4dvF3/zS247JlTB+8PJuFn0wQ9SHQs9d9BzpDgW495lafpkDb4ETpYR3o6K9jKS4T6Ijfvzm59Mj4c39813lfbiTQ0Y9K3hGv5BAF6iTSlWncZmuUxlYKUKAZWzkT6c65haCzVU0XBXr73LTQeB3TI81eOuS5mUAf3phfEuoqHKRAXcZ0ZRq32RqlsZXdo0Aztn8u/PuDxQVK8d5yOq++IMapUG/PT5yfv4edurRRoGdv3pwwvqLJ12/O+N4xL2NyIf3Vadxma5TGVnaOAs3Y3tWYro3nhc4mRzgn7zkvvLe8Ozi/jGn2wKN1oLO3oHcnH+0bBXr+WKoL6VdBGhPWksKJYisZW7oe6FuLxpqcjPlohef41KOzX55MTTY+Xvrq6OsPZivlx0I9+3DybeNZpfknewW6E0hjwlpSOFFsJWNbV6T/3cncV9f+cvqVmUDH5xSNeeIXU5Pdj2+cvE+9O/7T2JVxLvz8WRscA21DgdbCyUKqhRPFVjK2dk+ks//58liNz7xy8Z5IZ798ejB47NWYhT/75TPjhaDPzRaCvj961pPjb3zwxnhqfnqVJgW6G0Bjoo+Dma1sv5b2367p2s69lAnaWfBDaL/vynn25sK80f3vrnvTJQVaSB/T6c1svZYNfrvOqbUl2+ynTM7Owh9C+y3Qc2cirX9akgKto48Fne1su5ZNfrvuxV3pNnsqE7OzDPlD6IAEev9EgS6FMiZefBFl0C3XstFvt+L0gmSbfZVJ2VnGcKIcmECzafh17xmiQMtQoMuzXHmbCnSXHJhAp7P651njuqITFGgZCnR5litvU4HukkMT6Nm/3Lz53ZNHpyHd/P6vkuelKNAyFOjyLFfepgLdJYcm0DFezm5dMGMC5U8nkfIklJ1lyB9C+y3Qc8uY1keBFkLyp8uY8iSYnYU/hPZboI0o0EpA/nQhfZ6Es7Pgh9CeC/SzPyyy7sYUaC2cLKRaOFFsJeMQBXppLdNjr6zzkV6B1sLJQqqFE8VWMo5CoIPBOvf4UKC1cLKQauFEsZWMQxTo2b//YqTM77399ttvngyuvfL2f395rWvaKdBaOFnaamk98Nj9vH1vpR84UQ5RoAv3ERm+P1Hngxtr3CVJgdbCydJUS+vU94rn7XkrPcGJcpACvb2gyzuT6+LdXeOETgVaCydLSy2tiy9XPW+/W+kLTpRDFOi52xrfPxmrc51LiijQWjhZGmppPf1n5fP2upXe4EQ5RIEml7Nb5+QkBVoLJ4sCzSDtLJwohynQc+9AFehSSGNiv2tRoDuFE+UQBTq8vXA/kNseA10OaUzsdy0KdKdwohykQO/GberP3ppczu79E2fhM0hjYs9rcRJpl3CiHKRAR287B4M/uXnz5jOTW36OF9avsZJegdbCyeIypgzSzsKJcpgCPXt0n/pvfDS5F/0aV1VWoLVwsriQPoO0s3CiHKZAh8PPpjdPfmV88+SzN//Jc+FTSGPCWlI4UWwl41AF2oACrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyDlegcT3QD9fcmAKthZOFVAsniq1kHKZAH7yxcCk77wu/FNKY6L55RctjXXTPfINq4USxlYyDFOj5C4Iq0KWQxsSK26dd/bEuVqy9BNXCiWIrGQcp0DuDwePff3vOv655hzkFWsuSLF0rzXtavU6qhRPFVjIOUaBnry+cyrk+CrSWPEvXuY59nT9JqoUTxVYyDlGg5y4msj4KtBYFmsGJYisZhynQdQ97nkOB1qJAMzhRbCXjEAV67oLK66NAa1GgGZwotpLBEOjDGy0HLTsmkVZfe+kyCrQWJ5EyOFFsJYMh0NtNsz5LBTp6C/rq1TemQGtxGVMGJ4qtZPQl0E9HrPu9Z7cHWxXo2ZvfHQyuff3mjO+5jGkZpDHhQvoUThRbyehJoJ9+ur5BP3hpsMeMA2AAACAASURBVF2Bnl9H70L65ZDGhLWkcKLYSkY/Av300/UNemcweO59BVoCaUxYSwoniq1k9CLQTz+9gkHvPP7j4d3tHgNtQ4HWwslCqoUTxVYy6gU6RoHWQBoT2z8G2np8FFULJ4qtZBywQM/WvY7dDAVay7Zn4Vtn6Fm1cKLYSsahCvSDl8cHPx/++StrTsEPFWg1W14H2rpGdMiqhRPFVjLqJ5HGbFug05vKjQR6Y/D42md1KtBatnsmUutZSpMkoFo4UWwlA7CMabh9gd4eDB7/i5Ov/frsHweDJ9Z9D6pAa1GgGZwotpJBWEi/dYHeHQxenV1S5P2TwRp3NJ6gQGtRoBmcKLaSwTiVc8sCvT0+F352TaY7a29agdaiQDM4UWwl4xAFOr0a00yg909cSL8U0phwEimFE8VWMg5RoFN1zgS6/sVBFWgtLmPK4ESxlQwFGijQWlxIn8GJYisZhyjQs9fHE0czc95dexpegdbCyUKqhRPFVjIYAm1l6QWVn5wLdMkN5j6/9e0/XvyaAq2Fk4VUCyeKrWQcpEDvnwye+2gi0AcvDbLbe3z101MFOmSNCWtJ4USxlYyDFOj4EnmDZ06uff3p0X+zu3t8fKpAx4DGRPMBy+1vspfjqq1wXiHQzoJvZd8FOvzdyfxqoJk/P7+lQCdwxkT7lPnWN9nPzH4rmFcItLPwW9l7gQ4/++UzI3s+9uw7yWOjD/D/1WOgYzBjYoNFm9veZE9rS1uhvEKgnWXIb2X/BdrFu6ffcRJpAmVMbHLa0JY32dfZTa1AXqEhZ2cZw4ly8AL97A8XLwt6b/TxfVGgT835RIp4ZKbyTXY9r4eYcpAcjkAf3rh4T6QvX3vh50MFikKBykFxyAJ99/RHrgOdQflU5kf4pUBeoSFnZxnDiXLoH+EvCfTjyfy7Ap2AGRM9iKl1k13P270/3VlSOFGOTaCf3xp9gFegMzhjogcxtW6y63k796c7SwonyrEJ9OPT4Ju/Pf+tCrSSHsTUusmu5+3an+4sKZwoCjRQoLVwspBq4USxlYxjE+gMP8JPII0Ja0nhRLGVDAUaKNBaOFlItXCi2EqGAg0U6Lr0cyCw6YLKXTTHVBUZtpKhQAMFuiY9TUW33NKji/aYqiLDVjIOS6AjXV7GW3ospWlM9LUYckmWPtZzrkrCeYX2fWfpCU4UBRoo0LXo7XScPEsfZxStTMJ5hfZ8Z+kLTpTDEujZmzcv8z3vibQMBZon4bxCe76z9AUnymEJdCMU6Foo0J3CiWIrGQo0UKBroUB3CieKrWQo0ECBroeTSLuEE8VWMhRooEDXpB9/uowphRPFVjIOXaBn//72vzqJtAwX0udJOK/Q/u8svcCJcugCXbKQPkOB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZhy5QP8J3QRoT1pLCiWIrGYcu0CugQGvhZCHVwoliKxkAgX7w8mBw7dl3Wp6qQDcDNCb6mZhqA1SLO0sKJ0q9QN+anrF+7ScNz1Wgm8EZEz0tjWqDU4s7Sw4nSl8CvT5irW+8O7j26nD44PW153oW8Vz4zcCMib4W57eBqWXozpLDidKTQK9fX9OgZ68PfjD+78Mb0/9eDa/GtBmUMdHb6aFtUGoZw4liKxn9CPT69XUN+vDGzG+3B89f/eco0M2gjAkFuhROFFvJ6EWg16+vb9A5WxHoRijQMhToUjhRbCWDItCHN1pmkRToZlDGhAJdCieKrWRQBHpn8GTDD1Kgm4EZEyh/cmoZurPkcKJABHp368uYzv4w44P/4jHQZXDGBMmfoFrcWXI4UaonkabcPbnWMAe/XKAP3nASaR1AYwLkT1It7iwpnCjVy5gm3Gl7/7lUoOcn459QoMsgjQlrSeFEsZWM8oX0w/G5SI3+XCbQO4PBta9/92T8v8ky/fVQoLVwspBq4USxlYz6UznPbg8ebzgJaUIu0LPXB098NFuif2f8x/VQoLVwspBq4USxlYx6gd5eX3GXyAU6WxJ1Z7Ky9PbaZzgp0Eo8BprDiWIrGeUCvcJbxMssE+hk3ujuZGXU3bXXRynQQpyFXwIniq1kVAt0Yb6nYSHoCoGO1fzwxrqCVqB1uA50GZwotpJRLdC7g+0L9Oz1yUf4+ydjj8bJ9itRoGV4JtJSOFFsJaNaoJuxZBZ+el799FDoVKProEDLUKBL4USxlYyDFOj9k8Gz74yn4Z+/yhyVAi1DgS6FE8VWMg5SoCNrjs8/ujsYXDsZrH2VJwVahgJdCieKrWQcpkCHvxt/cD+7PTkRyXWgS8GMCZQ/ObUM3VlyOFEOVKDD4f8eefPs/WeeeWXtRVIKtBCSP0G1uLPkcKIcrECvjgKtBORPUi3uLCmcKIco0LM3F+4jd/+7f+ok0jJIY8JaUjhRbCXjEAV6bumn60A7II0Ja0nhRLGVjIMXqOtAOyCNCWtJ4USxlYwDE2h2W07XgS6FNCaW17Lzw6OkWjhRbCXjwAS6eGroHK/GtBTSmFhay+4n6Em1cKLYSsahCfTsX27eHF9K+eac7/9q3Y0p0FqWZClYIkqqhRPFVjIOTaBj1p83OocCrSXPUnGSEqkWThRbyThEgZ5bxrQ+CrQWBZrBiWIrGYco0BlnH15tYwq0FgWawYliKxmHKtAPXh5fT+Thn69/JqcCLUaBZnCi2ErGYQr07K3pDeEf3rjCDesUaC1OImVwothKxmEK9PZg8PhfnHzt12f/6NWYuiCNCZcxpXCi2ErGQQr07mDw6mwu/v0T14EuhzQmXEifwoliKxkHKdDJLT1mi5nueFfO5ZDGhLWkcKLYSsYhCnR6U7mZQD0XvgPSmLCWFE4UW8k4RIFO1TkTqFdj6oA0JqwlhRPFVjIUaHB8AiVdxLixll5+BVWRYSsZhyjQs9fHE0czc971akzLQN1Go62Wfn4FVZFhKxmHKNDpxNFUoCOZOomUw7qRW1MtPf0KqiLDVjIOUqD3TwbPfTQR6IOXBuMJpbU4MoHCbiXcUktfv4KqyLCVjIMU6Ogt6GDwzMm1rz89WP+28Aq0GAWawYliKxmHKdDh707ml1Ne258KtBgFmsGJYisZByrQ4We/fGZkz8eefWf9jSnQWhRoBieKrWQABPrBS4PBtStcNWkB7wu/ATB/OomUwoliKxn1Ar0z/ai9/lWTFlgi0CteCHTGsQnUZUxLk1BeoSFnZ7GVnL4EuvZ+ff/k2qvD8Wz5uquNFkkEevbW+PDnY69e/R3t0QnUhfRLUBUZtpLRk0DXf2dwezrNs/4p64tcFuj9+ezR1d/RHp9AUWPCWlI4UWwlox+BXv3YVNuN4PL7wj/2n56+wu3gAwVaCycLqRZOFFvJ6EWgDbOj90+uLLxhItA7g+nC+Q9O1r8f/BwFWgsnC6kWThRbyYAI9ArXPV7kokDPXp97c2TSqx5UVaC1cLKQauFEsZUMhEBvj943/rjlByUCnZ25ef/kyp/hFWgtnCykWjhRbCWDINCzf3zmZHDtLxt+0EWBPrwxmB1KffSntVGgtXCykGrhRLGVDMok0gdNn+EV6GaQxoS1pHCi2EpG+TKmOetft3MBBboZpDFhLSmcKLaSUb6Qfk7TNLwC3QzSmLCWFE4UW8moPpVzevX4oQItgTQmrCWFE8VWMqoFOrw9W250u+VcTgW6GaQxYS0pnCi2klEu0MnV44dnb61/5fgFFOhmkMaEtaRwothKRrlAh3en565f28ZC+smZnBfxrpxLIY0Ja0nhRLGVjHqBDh+8PNLnVa58/AgFuhmkMWEtKZwotpIBEOgGXDoT6c2bl/metzVeBmlMWEsKJ4qtZByWQDdCgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0OFCBdpzScABXpO8FVZFhKxkKNDhMgXacVHsA90TqB1WRYSsZCjQ4SIF2XNblAO7K2ROqIsNWMhRocIgC7biw4AHcF74vVEWGrWQo0ECB1kIfFDVwothKhgINFGgt9EFRAyeKrWQo0ECB1kIfFDVwothKhgINDlGgTiK1oCoybCVDgQYHKVCXMTWgKjJsJUOBBocpUBfSXx1VkWErGQo0OFCBdkEaE9aSwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECXeT6iB0mGe5JLTuHE8VWMhRooEAXuH595wbdh1p2DyeKrWQo0ECBPuL69d0bdA9qKYATxVYyFGigQIPr1wsMyq+lAk4UW8lQoIECDRQoBk4UW8lQoMFTn8iMRwKtTiKyhxynQLe5sS7o/3z6DpQTxVZSOFF8Bxoo0Ec4iUSBE8VWMhRooEAXcBkTBE4UW8lQoIECXcSF9Aw4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwlQ4EGCrQWThZSLZwotpKhQAMFWgsnC6kWThRbyVCggQKthZOFVAsniq1kKNBAgdbCyUKqhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRoo0Fo4WUi1cKLYSoYCDRRoLZwspFo4UWwl4wgF+n/+7vT0hR++d+nrCrQWThZSLZwotpJxfAL9zemEF35+8QEFWgsnC6kWThRbyTg6gd47feHvh8Mvfnr6zd9eeESB1sLJQqqFE8VWMo5NoF/99PQfxv/98rXpfxdQoLVwspBq4USxlYxjE+iXr83eeb57+qMLDynQWjhZSLVwothKxrEJNFCgQ9aYsJYUThRbyThWgX75WswiPTXnExGRzTl8gX58+p35HxWoiGyTgxfoPZcxjSF9KrOWFE4UW8k4zo/w9269cHEOXoFWw8lCqoUTxVYyjlKgHyfvPxVoNZwspFo4UWwl4xgF+pvUnwq0GE4WUi2cKLaScXwC/erd029dPAlpggKthZOFVAsniq1kHJ9A3z399h/TBxRoLZwspFo4UWwl4+gE+vEyfyrQYjhZSLVwothKxrEJ9MvXTud858JDeyzQ6yNantcxJlo32Q59UNTAiWIrGccm0HunByjQ69cbdbd8TDRvsh36oKiBE8VWMo5NoB3srUCvX2/V3dIx0b7JduiDogZOFFvJUKDBvgr0+vVm3S0bExtssh36oKiBE8VWMhRooEC3scl26IOiBk4UW8lQoIEC3cYm26EPiho4UWwlQ4EGCnQbm2yHPihq4ESxlQwFGuyrQJ1E2jaqIsNWMhRosLcCdRnTllEVGbaSoUCD/RWoC+m3i6rIsJUMBRrssUBbIY0Ja0nhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBgq0Fk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaKNBF+rgiffc2m2rp5cL5qiLDVjIUaKBAF+jjnkgrttlSSz+3blIVGbaSoUADBfqIPu7KuWqbDbX0dPNQVZFhKxkKNFCgQR/3hV+5zavX0tft61VFhq1kKNBAgQYKFAMniq1kKNBAgQYKFAMniq1kKNBAgQYKFAMniq1kKNBAgT7CSSQKnCi2kqFAAwW6QB9iWrFNlzFlcKLYSoYCDRToIn2IqXubLqTP4ESxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAA7hAu472NR4J7GGTG0AfFDVwothKhgIN2ALtmm9unIvuYZObQB8UNXCi2EqGAg3QAu1a8di4GrKHTW4EfVDUwIliKxkKNCALtOucm8bzcXrY5GbQB0UNnCi2kqFAAwW66SY3gz4oauBEsZUMBRoo0E03uRn0QVEDJ4qtZCjQQIFuusnNoA+KGjhRbCVDgQZkgTqJtEtURYatZCjQAC1QlzHtEFWRYSsZCjRgC9SF9LtDVWTYSoYCDeAC7QPSmLCWFE4UW8lQoIECrYWThVQLJ4qtZCjQQIHWwslCqoUTxVYyFGgAEGgfBx47ttl6DLSPx7ygcg4niq1kKNCgXqB9TH13bLN1Fr6Px4abrO5qeGInqiLDVjIUaFAu0D4WX3Zss3UdaB+Pjdng/IKrP7MTVZFhKxkKNKgW6PXr2/dBxza7ftyuH5tw9UHRR2OTJJzxiVdFDZwoCjRQoGWPTVCgGZwotpKhQAMFWvbYBAWawYliKxkKNFCgZY9NUKAZnCi2kqFAg2qBOol0Zfrxp6pIsZUMBRqUC9RlTFemF3+qihRbyVCgQb1AXUh/ZfpoTFWk2EqGAg0AAt01pDFhLSmcKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQYIu/c+vBvtYjeo0HHvs5ltlGLwczG1EVGbaSoUCD7f3OrdPNrXPKjVPfPc2mN9HPdHojqiLDVjIUaLC137l1wWPrqsbGxZeNT9v1ctUCVEWGrWQo0GBbv/P16yt0sOUzkbqe1/FY49N2fcJUBaoiw1YyFGigQDd+rBUFuhROFFvJUKCBAt34sVYU6FI4UWwlQ4EGCnTjx1pRoEvhRLGVDAUaOIm0+WOtoPypKlJsJUOBBi5j2sJjrZD8qSpSbCVDgQYupN/GY62A/KkqUmwlQ4EGnspZCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjTY0SRSHxNFjex64mbXE1OtqIoMW8lQoMFuljH1sVSpkV0vHdr10qhmVEWGrWQo0GAnC+lbV4z3sNJ814vXd704vx1VkWErGQo02MWpnF2PtW6zkR422fzzdp1lBaoiw1YyFGigQHtFgTbBiWIrGQo0UKC9okCb4ESxlQwFGijQXlGgTXCi2EqGAg2cROqXPmrpB1WRYSsZCjRwGVPP9FFLL6iKDFvJUKCBC+n7po9a+kBVZNhKhgINPJWzFk4WUi2cKLaSoUADBVoLJwupFk4UW8lQoIECrYWThVQLJ4qtZCjQ4PgESjru2EMtzb+eqsiwlQwFGhydQFEz39uvpf3XUxUZtpKhQINjEyhr7eXWa9ng11MVGbaSoUCDIxMo7Oyfbdeyya+nKjJsJUOBBgq0FgWawYliKxkKNFCgtSjQDE4UW8lQoIECrUWBZnCi2EqGAg2OTKBOIi1PAnmFxnCi2EqGAg2OTaAuY1qahPIKDTk7i63kKNDg6ATqQvolqIoMW8lQoMHxCRQ1JqwlhRPFVjIUaKBAa+FkIdXCiWIrGQo0UKC1cLKQauFEsZUMBRpc9XduP8TW9Kw+II0Ja0nhRLGVDAUaXPF33mCSt+VJvUAaE9aSwoliKxkKNLja77zJMsOG5/QDaUxYSwoniq1kKNDgSr/zRie6XP0pPUEaE9aSwoliKxkKNFCgtXCykGrhRLGVDAUaKNBaOFlItXCi2EqGAg0UaC2cLKRaOFFsJUOBBk4i1cLJQqqFE8VWMhRo4DKmWjhZSLVwothKhgINXEhfCycLqRZOFFvJUKCBp3LWwslCqoUTxVYyFGigQGvhZCHVwoliKxkKNFCgtXCykGrhRLGVDAUaAAS66ysck8YEflDUwIliKxkKNKgX6M7vsUEaE/hBUQMniq1kKNCgXKC7v8sbaUzgB0UNnCi2kqFAg2qBFtxnmDQm8IOiBk4UW8lQoIECrYWThVQLJ4qtZCjQ4KlPankk0OIgIrIRxynQbW6sC9+BpnCykGrhRLGVDN+BBtUCdRKJAqkWThRbyVCgQblAXcYEgVQLJ4qtZCjQoF6gLqRnQKqFE8VWMhRoABDoriGNCWtJ4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGijQWjhZSLVwothKhgINGHU4PQAAB6dJREFUFGgtnCykWjhRbCVDgQYKtBZOFlItnCi2kqFAAwVaCycLqRZOFFvJUKCBAq2Fk4VUCyeKrWQo0ECB1sLJQqqFE8VWMhRooEBr4WQh1cKJYisZCjRQoLVwspBq4USxlQwFGjwlIrIVtmmm/lCgIgJkm2bqj60K9AjZl9d5x1hLhq1k7HcrCnQz9vvV7w1rybCVjP1uRYFuxn6/+r1hLRm2krHfrSjQzdjvV783rCXDVjL2uxUFuhn7/er3hrVk2ErGfreiQDdjv1/93rCWDFvJ2O9WFOhm7Per3xvWkmErGfvdigIVEWlEgYqINKJARUQaUaAiIo0oUBGRRhSoiEgjClREpBEFKiLSiAJt58vXTid887fVSVh89Ztbp6d/9vfVMUh89dPTOe4ti3zxd6NKfvhedYx2FGg7n99ySCR8Mft35W+qg4BQoDmzIfTCz6uDNKNA27l3+p3qCEBGrvjWe8Ov/m2fR0VvfH7LVhYY7Svffm/4xej//1gdpRUF2s67pz+qjgDk3uw91sf+83KJkTDcZRb4/NZkX/nytf39Z0WBNvPVT/f3Ze+PkSP+oToDlo/3+K1WH8w+w+3zPqNAm/nytW//r789Pf3rPT4C3gNfvuZBvmV8+dr+iqIXfAd6zMznkBwUi3x+69t//I+/Oj391j9XJ+HhUY0LxDHQ/e1FgTZz7/T0b/44/H8/c7ZkkZFAfzb9d8WjfRfY5zdaPfHVb6YLNvb3wIYCbWb+fsK5pEXuTcfDaGRoiwvc8wjoRT7/24lAv7W/h8EU6MY4Lha5N3/r+e4efy7rhX2eKumJz2/t/T+2CnRjZkfCZUKsdBwfDC3OwsL95BLv7v8/tgp0YzTFIqEJfXEBz7u4SCwE3OMhpEBbiU9kDoxFYlB4ZOMCHiu/iAI9at7d/1XAffCuc2spnndxGT/CHzPTI+Bf/K3vtM4xquWH7+33xEAveIbBZe7t/4oNBdrOx7PL6+zvGoxeuDe7wo7vy8+xxx9T+2M2hPb4w4oC3YDxxQxf2ONFwD3xxc9ueYbrJTwmnPF/x9cD3ed9RYGKiDSiQEVEGlGgIiKNKFARkUYUqIhIIwpURKQRBSoi0ogCFRFpRIGKiDSiQEVEGlGgIiKNKFARkUYUqIhIIwpUVvH7N54eDAaPff+dxuffHjzx0fK/tvLwxuD5LWxGZBMUqHRz9vpgznNt4tu2QN//0/HzFagAUKDSyYI/B43m27JAZ89XoAJAgUondwaDa69+OPrDZ788GQx+0LIJBSoHiwKVLkZvQL82P/Z5/6RNfQpUDhYFKl2MNPVk/OX24Gu/btiGApWDRYFKF6N3oE9e/uqDN0Yf5689O31rOjbZ2fjz/eM/nj/++/Hjg2demYpypUCTzT09GDz2yvzbPnh59PBzH90Z+/vO9Gjs89n3iewaBSqdjIT1jYuCuhPT8uO/jUz2jdcXJ5nO3po//vjkDesqgV7a3H9+afHp82msr71xUaDP3thkbktkcxSodPJwLKmv/48PF740ctj43eJnb02VN/mOZz+cePPJ2ePjBU8PXpr9fYVAk81d+8uPhg9eH0w/o9+ebG5i5ckRhEcf4QfXXln4PpHdo0Clm/kbwGdemUn0/sn8U/2dwbWfTE02/cLt+d+nfx39YaK6boFmm/vB7AePv3H0+POzhy8JdPH7RApQoLKK6RHN8UfqyVHKOzGVND1AOjLZ7AtTdd6deHD68KLx5lz4a7K5J+bHTseP3FnY+gWBnvs+kQIUqKzB2b+/OT6dc2zGxWmlicsWJuovqXK1QDs2N1HnwuO3Lwp08ftEKlCgsiZnv5h8hn54Y+HUpNkX5scgH70X/Oz3b4+Vu1qgHZu7c2Hrdy4K9PlzXxfZPQpU1ubO+KhjZrwfxDdMVPb+0wsPK1A5YBSodHHu+OLEWeeW1sdXF757Ouv0zM1/+nCdj/Adm5sLdP64AhUcClS6uLN4/vtkQvzSpPc5gY4euhOXbVrzGOiyza08BqpApRoFKl2MnBnnwo9XZP5gvlhpzFR+j6bDJ057ZMQL0+aPtnLhr5c2d06MHbPwClSqUaDSye3xKvlfjf5w9sFLg/nCzJkB706EOj6K+fzse0cufCTQO+scA802d06MHetAFahUo0Clk3OTPNP3inemp72PZ+XHKpt8xzc+Gj54YyrS2Uf43780f8LMePOjAbfPTxolmzsvxjsXzkQar7c/+1CBCgEFKt0sXFH58dln7Th5ff5W8Osn8zPUx3+fnck+ePYXU2WuEOjlzZ0X49nsCY//t+nf747/8qQCFQIKVFbx4M1nxm8m/+THj74yuUvS7Atjk43ffQ5ml1MaTq6RdG30uX82g75KoJc3N91OiHHxakwj3h/p+smPFKgAUKCyITu7MOeW7kYnsj0UqGxIzwKNlaj5pUlFKlGgsiE9CzRWosZ0vAgGBSob0rNAR9689uro/ef7Jx7qFBwKVDak72Ogd0/miwDeWf3NIjtFgcqG9D6J9Nlb00l6Z5AEhwIVEWlEgYqINKJARUQaUaAiIo0oUBGRRhSoiEgjClREpBEFKiLSiAIVEWlEgYqINKJARUQaUaAiIo0oUBGRRhSoiEgj/x9EJ+m8nnC7BwAAAABJRU5ErkJggg==" width="672" /></p>
-<p>Using only Sepal.Length and Petal.Length to create the cluster
-assignments using the K-means algorithm, we can see that the cluster
-assignments make sense. For example, observations in cluster 1 are close
-together in terms of euclidean distance as well as on the scatterplot,
-and those observations have larger values for Petal.Length and
-Sepal.Length.</p>
-<p>#Visualizing the K-Means Algorithm in Action</p>
+<p>Using only <strong>Sepal.Length</strong> and
+<strong>Petal.Length</strong> to create the cluster assignments using
+the K-means algorithm, we can see that the cluster assignments make
+sense. For example, observations in cluster 1 are close together in
+terms of Euclidean distance as well as on the scatterplot, and those
+observations have larger values for <strong>Petal.Length</strong> and
+<strong>Sepal.Length</strong>.</p>
+</div>
+<div id="visualizing-the-k-means-algorithm-in-action" class="section level3">
+<h3>Visualizing the K-Means Algorithm in Action</h3>
 <p>In order to create an animated graph that shows the cluster
 assignments on each iteration, we must create another modified K-means
-function that saves the cluster means and assignments of each
+function that saves the centroids and all the assignments on every
 iteration.</p>
 <pre class="r"><code>k_means_iterations &lt;- function(data, k, pca = FALSE) {
 
+    #option for Principal Component Analysis
     if(pca == TRUE){
         data &lt;- princomp(data)
         data &lt;- data$scores %&gt;%
@@ -652,19 +661,25 @@ iteration.</p>
         }
 
         #save the cluster assignments from this iteration to another object
-        #so we can check to see if cluster assignments changed
+        #so we can check to see if cluster assignments change in the next iteration
         last_vec &lt;- cluster_vec
         
+        #save this iteration&#39;s clustering vector and original data to a new data frame
         df &lt;- data %&gt;%
             add_column(cluster = cluster_vec) %&gt;%
             add_column(iteration = iter)
 
+        #save this iteration&#39;s centroids to a new data frame with the iteration number too
         center_df &lt;- clusters %&gt;%
             add_column(cluster = c(1:k)) %&gt;%
             add_column(iteration = iter)
 
+        #add this iteration&#39;s cluster assignments to the data frame containing all the
+        #assignments of all previous iterations
         all_df &lt;- rbind(all_df, df)
 
+        #add this iteration&#39;s centroids to the data frame containing all the 
+        #centroids of all the previous iterations
         all_center_df &lt;- rbind(all_center_df, center_df)
 
         #group the observations into their assigned clusters and find the means
@@ -677,10 +692,14 @@ iteration.</p>
         #remove the first column that contains the cluster number
         clusters &lt;- clusters[, -1]
         
+        #clear the data frames containing information on only the current iteration
         df &lt;- data.frame()
         center_df &lt;- data.frame()
+        
+        #add to the iteration counter
         iter &lt;- iter + 1
         
+        #find sizes and clusters once the algorithm is finished
         if (stop == 1) {
             sizes &lt;- data %&gt;% 
                 cbind(cluster_vec) %&gt;% 
@@ -704,1716 +723,42 @@ iteration.</p>
                    &quot;All Centroids&quot; = all_center_df)
     return(result)
 }</code></pre>
-<pre class="r"><code>k_means_iterations(iris3, 3)</code></pre>
-<pre><code>## $Sizes
-## [1] 41 51 58
-## 
-## $`Cluster Means`
-## # A tibble: 3 × 3
-##   cluster_vec Sepal.Length Petal.Length
-##         &lt;int&gt;        &lt;dbl&gt;        &lt;dbl&gt;
-## 1           1         6.84         5.68
-## 2           2         5.01         1.49
-## 3           3         5.87         4.39
-## 
-## $`Clustering Vector`
-##   [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-##  [38] 2 2 2 2 2 2 2 2 2 2 2 2 2 1 3 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
-##  [75] 3 3 1 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 2 3 1 3 1 1 1 1 3 1 1 1 1
-## [112] 1 1 3 3 1 1 1 1 3 1 3 1 3 1 1 3 3 1 1 1 1 1 1 1 1 1 1 3 1 1 1 3 1 1 1 3 1
-## [149] 1 3
-## 
-## $Iterations
-## [1] 12
-## 
-## $`All Assignments`
-##      Sepal.Length Petal.Length cluster iteration
-## 1             5.1          1.4       2         1
-## 2             4.9          1.4       2         1
-## 3             4.7          1.3       2         1
-## 4             4.6          1.5       2         1
-## 5             5.0          1.4       2         1
-## 6             5.4          1.7       2         1
-## 7             4.6          1.4       2         1
-## 8             5.0          1.5       2         1
-## 9             4.4          1.4       2         1
-## 10            4.9          1.5       2         1
-## 11            5.4          1.5       2         1
-## 12            4.8          1.6       2         1
-## 13            4.8          1.4       2         1
-## 14            4.3          1.1       2         1
-## 15            5.8          1.2       2         1
-## 16            5.7          1.5       2         1
-## 17            5.4          1.3       2         1
-## 18            5.1          1.4       2         1
-## 19            5.7          1.7       2         1
-## 20            5.1          1.5       2         1
-## 21            5.4          1.7       2         1
-## 22            5.1          1.5       2         1
-## 23            4.6          1.0       2         1
-## 24            5.1          1.7       2         1
-## 25            4.8          1.9       2         1
-## 26            5.0          1.6       2         1
-## 27            5.0          1.6       2         1
-## 28            5.2          1.5       2         1
-## 29            5.2          1.4       2         1
-## 30            4.7          1.6       2         1
-## 31            4.8          1.6       2         1
-## 32            5.4          1.5       2         1
-## 33            5.2          1.5       2         1
-## 34            5.5          1.4       2         1
-## 35            4.9          1.5       2         1
-## 36            5.0          1.2       2         1
-## 37            5.5          1.3       2         1
-## 38            4.9          1.4       2         1
-## 39            4.4          1.3       2         1
-## 40            5.1          1.5       2         1
-## 41            5.0          1.3       2         1
-## 42            4.5          1.3       2         1
-## 43            4.4          1.3       2         1
-## 44            5.0          1.6       2         1
-## 45            5.1          1.9       2         1
-## 46            4.8          1.4       2         1
-## 47            5.1          1.6       2         1
-## 48            4.6          1.4       2         1
-## 49            5.3          1.5       2         1
-## 50            5.0          1.4       2         1
-## 51            7.0          4.7       3         1
-## 52            6.4          4.5       2         1
-## 53            6.9          4.9       3         1
-## 54            5.5          4.0       2         1
-## 55            6.5          4.6       3         1
-## 56            5.7          4.5       2         1
-## 57            6.3          4.7       3         1
-## 58            4.9          3.3       2         1
-## 59            6.6          4.6       3         1
-## 60            5.2          3.9       2         1
-## 61            5.0          3.5       2         1
-## 62            5.9          4.2       2         1
-## 63            6.0          4.0       2         1
-## 64            6.1          4.7       3         1
-## 65            5.6          3.6       2         1
-## 66            6.7          4.4       3         1
-## 67            5.6          4.5       2         1
-## 68            5.8          4.1       2         1
-## 69            6.2          4.5       2         1
-## 70            5.6          3.9       2         1
-## 71            5.9          4.8       3         1
-## 72            6.1          4.0       2         1
-## 73            6.3          4.9       3         1
-## 74            6.1          4.7       3         1
-## 75            6.4          4.3       2         1
-## 76            6.6          4.4       2         1
-## 77            6.8          4.8       3         1
-## 78            6.7          5.0       3         1
-## 79            6.0          4.5       2         1
-## 80            5.7          3.5       2         1
-## 81            5.5          3.8       2         1
-## 82            5.5          3.7       2         1
-## 83            5.8          3.9       2         1
-## 84            6.0          5.1       3         1
-## 85            5.4          4.5       2         1
-## 86            6.0          4.5       2         1
-## 87            6.7          4.7       3         1
-## 88            6.3          4.4       2         1
-## 89            5.6          4.1       2         1
-## 90            5.5          4.0       2         1
-## 91            5.5          4.4       2         1
-## 92            6.1          4.6       2         1
-## 93            5.8          4.0       2         1
-## 94            5.0          3.3       2         1
-## 95            5.6          4.2       2         1
-## 96            5.7          4.2       2         1
-## 97            5.7          4.2       2         1
-## 98            6.2          4.3       2         1
-## 99            5.1          3.0       2         1
-## 100           5.7          4.1       2         1
-## 101           6.3          6.0       3         1
-## 102           5.8          5.1       3         1
-## 103           7.1          5.9       1         1
-## 104           6.3          5.6       3         1
-## 105           6.5          5.8       3         1
-## 106           7.6          6.6       1         1
-## 107           4.9          4.5       2         1
-## 108           7.3          6.3       1         1
-## 109           6.7          5.8       3         1
-## 110           7.2          6.1       1         1
-## 111           6.5          5.1       3         1
-## 112           6.4          5.3       3         1
-## 113           6.8          5.5       3         1
-## 114           5.7          5.0       3         1
-## 115           5.8          5.1       3         1
-## 116           6.4          5.3       3         1
-## 117           6.5          5.5       3         1
-## 118           7.7          6.7       1         1
-## 119           7.7          6.9       1         1
-## 120           6.0          5.0       3         1
-## 121           6.9          5.7       3         1
-## 122           5.6          4.9       3         1
-## 123           7.7          6.7       1         1
-## 124           6.3          4.9       3         1
-## 125           6.7          5.7       3         1
-## 126           7.2          6.0       1         1
-## 127           6.2          4.8       3         1
-## 128           6.1          4.9       3         1
-## 129           6.4          5.6       3         1
-## 130           7.2          5.8       1         1
-## 131           7.4          6.1       1         1
-## 132           7.9          6.4       1         1
-## 133           6.4          5.6       3         1
-## 134           6.3          5.1       3         1
-## 135           6.1          5.6       3         1
-## 136           7.7          6.1       1         1
-## 137           6.3          5.6       3         1
-## 138           6.4          5.5       3         1
-## 139           6.0          4.8       3         1
-## 140           6.9          5.4       3         1
-## 141           6.7          5.6       3         1
-## 142           6.9          5.1       3         1
-## 143           5.8          5.1       3         1
-## 144           6.8          5.9       1         1
-## 145           6.7          5.7       3         1
-## 146           6.7          5.2       3         1
-## 147           6.3          5.0       3         1
-## 148           6.5          5.2       3         1
-## 149           6.2          5.4       3         1
-## 150           5.9          5.1       3         1
-## 151           5.1          1.4       2         2
-## 152           4.9          1.4       2         2
-## 153           4.7          1.3       2         2
-## 154           4.6          1.5       2         2
-## 155           5.0          1.4       2         2
-## 156           5.4          1.7       2         2
-## 157           4.6          1.4       2         2
-## 158           5.0          1.5       2         2
-## 159           4.4          1.4       2         2
-## 160           4.9          1.5       2         2
-## 161           5.4          1.5       2         2
-## 162           4.8          1.6       2         2
-## 163           4.8          1.4       2         2
-## 164           4.3          1.1       2         2
-## 165           5.8          1.2       2         2
-## 166           5.7          1.5       2         2
-## 167           5.4          1.3       2         2
-## 168           5.1          1.4       2         2
-## 169           5.7          1.7       2         2
-## 170           5.1          1.5       2         2
-## 171           5.4          1.7       2         2
-## 172           5.1          1.5       2         2
-## 173           4.6          1.0       2         2
-## 174           5.1          1.7       2         2
-## 175           4.8          1.9       2         2
-## 176           5.0          1.6       2         2
-## 177           5.0          1.6       2         2
-## 178           5.2          1.5       2         2
-## 179           5.2          1.4       2         2
-## 180           4.7          1.6       2         2
-## 181           4.8          1.6       2         2
-## 182           5.4          1.5       2         2
-## 183           5.2          1.5       2         2
-## 184           5.5          1.4       2         2
-## 185           4.9          1.5       2         2
-## 186           5.0          1.2       2         2
-## 187           5.5          1.3       2         2
-## 188           4.9          1.4       2         2
-## 189           4.4          1.3       2         2
-## 190           5.1          1.5       2         2
-## 191           5.0          1.3       2         2
-## 192           4.5          1.3       2         2
-## 193           4.4          1.3       2         2
-## 194           5.0          1.6       2         2
-## 195           5.1          1.9       2         2
-## 196           4.8          1.4       2         2
-## 197           5.1          1.6       2         2
-## 198           4.6          1.4       2         2
-## 199           5.3          1.5       2         2
-## 200           5.0          1.4       2         2
-## 201           7.0          4.7       3         2
-## 202           6.4          4.5       3         2
-## 203           6.9          4.9       3         2
-## 204           5.5          4.0       2         2
-## 205           6.5          4.6       3         2
-## 206           5.7          4.5       3         2
-## 207           6.3          4.7       3         2
-## 208           4.9          3.3       2         2
-## 209           6.6          4.6       3         2
-## 210           5.2          3.9       2         2
-## 211           5.0          3.5       2         2
-## 212           5.9          4.2       3         2
-## 213           6.0          4.0       3         2
-## 214           6.1          4.7       3         2
-## 215           5.6          3.6       2         2
-## 216           6.7          4.4       3         2
-## 217           5.6          4.5       3         2
-## 218           5.8          4.1       3         2
-## 219           6.2          4.5       3         2
-## 220           5.6          3.9       2         2
-## 221           5.9          4.8       3         2
-## 222           6.1          4.0       3         2
-## 223           6.3          4.9       3         2
-## 224           6.1          4.7       3         2
-## 225           6.4          4.3       3         2
-## 226           6.6          4.4       3         2
-## 227           6.8          4.8       3         2
-## 228           6.7          5.0       3         2
-## 229           6.0          4.5       3         2
-## 230           5.7          3.5       2         2
-## 231           5.5          3.8       2         2
-## 232           5.5          3.7       2         2
-## 233           5.8          3.9       3         2
-## 234           6.0          5.1       3         2
-## 235           5.4          4.5       3         2
-## 236           6.0          4.5       3         2
-## 237           6.7          4.7       3         2
-## 238           6.3          4.4       3         2
-## 239           5.6          4.1       3         2
-## 240           5.5          4.0       2         2
-## 241           5.5          4.4       3         2
-## 242           6.1          4.6       3         2
-## 243           5.8          4.0       3         2
-## 244           5.0          3.3       2         2
-## 245           5.6          4.2       3         2
-## 246           5.7          4.2       3         2
-## 247           5.7          4.2       3         2
-## 248           6.2          4.3       3         2
-## 249           5.1          3.0       2         2
-## 250           5.7          4.1       3         2
-## 251           6.3          6.0       3         2
-## 252           5.8          5.1       3         2
-## 253           7.1          5.9       1         2
-## 254           6.3          5.6       3         2
-## 255           6.5          5.8       3         2
-## 256           7.6          6.6       1         2
-## 257           4.9          4.5       3         2
-## 258           7.3          6.3       1         2
-## 259           6.7          5.8       3         2
-## 260           7.2          6.1       1         2
-## 261           6.5          5.1       3         2
-## 262           6.4          5.3       3         2
-## 263           6.8          5.5       3         2
-## 264           5.7          5.0       3         2
-## 265           5.8          5.1       3         2
-## 266           6.4          5.3       3         2
-## 267           6.5          5.5       3         2
-## 268           7.7          6.7       1         2
-## 269           7.7          6.9       1         2
-## 270           6.0          5.0       3         2
-## 271           6.9          5.7       3         2
-## 272           5.6          4.9       3         2
-## 273           7.7          6.7       1         2
-## 274           6.3          4.9       3         2
-## 275           6.7          5.7       3         2
-## 276           7.2          6.0       1         2
-## 277           6.2          4.8       3         2
-## 278           6.1          4.9       3         2
-## 279           6.4          5.6       3         2
-## 280           7.2          5.8       1         2
-## 281           7.4          6.1       1         2
-## 282           7.9          6.4       1         2
-## 283           6.4          5.6       3         2
-## 284           6.3          5.1       3         2
-## 285           6.1          5.6       3         2
-## 286           7.7          6.1       1         2
-## 287           6.3          5.6       3         2
-## 288           6.4          5.5       3         2
-## 289           6.0          4.8       3         2
-## 290           6.9          5.4       3         2
-## 291           6.7          5.6       3         2
-## 292           6.9          5.1       3         2
-## 293           5.8          5.1       3         2
-## 294           6.8          5.9       1         2
-## 295           6.7          5.7       3         2
-## 296           6.7          5.2       3         2
-## 297           6.3          5.0       3         2
-## 298           6.5          5.2       3         2
-## 299           6.2          5.4       3         2
-## 300           5.9          5.1       3         2
-## 301           5.1          1.4       2         3
-## 302           4.9          1.4       2         3
-## 303           4.7          1.3       2         3
-## 304           4.6          1.5       2         3
-## 305           5.0          1.4       2         3
-## 306           5.4          1.7       2         3
-## 307           4.6          1.4       2         3
-## 308           5.0          1.5       2         3
-## 309           4.4          1.4       2         3
-## 310           4.9          1.5       2         3
-## 311           5.4          1.5       2         3
-## 312           4.8          1.6       2         3
-## 313           4.8          1.4       2         3
-## 314           4.3          1.1       2         3
-## 315           5.8          1.2       2         3
-## 316           5.7          1.5       2         3
-## 317           5.4          1.3       2         3
-## 318           5.1          1.4       2         3
-## 319           5.7          1.7       2         3
-## 320           5.1          1.5       2         3
-## 321           5.4          1.7       2         3
-## 322           5.1          1.5       2         3
-## 323           4.6          1.0       2         3
-## 324           5.1          1.7       2         3
-## 325           4.8          1.9       2         3
-## 326           5.0          1.6       2         3
-## 327           5.0          1.6       2         3
-## 328           5.2          1.5       2         3
-## 329           5.2          1.4       2         3
-## 330           4.7          1.6       2         3
-## 331           4.8          1.6       2         3
-## 332           5.4          1.5       2         3
-## 333           5.2          1.5       2         3
-## 334           5.5          1.4       2         3
-## 335           4.9          1.5       2         3
-## 336           5.0          1.2       2         3
-## 337           5.5          1.3       2         3
-## 338           4.9          1.4       2         3
-## 339           4.4          1.3       2         3
-## 340           5.1          1.5       2         3
-## 341           5.0          1.3       2         3
-## 342           4.5          1.3       2         3
-## 343           4.4          1.3       2         3
-## 344           5.0          1.6       2         3
-## 345           5.1          1.9       2         3
-## 346           4.8          1.4       2         3
-## 347           5.1          1.6       2         3
-## 348           4.6          1.4       2         3
-## 349           5.3          1.5       2         3
-## 350           5.0          1.4       2         3
-## 351           7.0          4.7       3         3
-## 352           6.4          4.5       3         3
-## 353           6.9          4.9       3         3
-## 354           5.5          4.0       3         3
-## 355           6.5          4.6       3         3
-## 356           5.7          4.5       3         3
-## 357           6.3          4.7       3         3
-## 358           4.9          3.3       2         3
-## 359           6.6          4.6       3         3
-## 360           5.2          3.9       3         3
-## 361           5.0          3.5       2         3
-## 362           5.9          4.2       3         3
-## 363           6.0          4.0       3         3
-## 364           6.1          4.7       3         3
-## 365           5.6          3.6       3         3
-## 366           6.7          4.4       3         3
-## 367           5.6          4.5       3         3
-## 368           5.8          4.1       3         3
-## 369           6.2          4.5       3         3
-## 370           5.6          3.9       3         3
-## 371           5.9          4.8       3         3
-## 372           6.1          4.0       3         3
-## 373           6.3          4.9       3         3
-## 374           6.1          4.7       3         3
-## 375           6.4          4.3       3         3
-## 376           6.6          4.4       3         3
-## 377           6.8          4.8       3         3
-## 378           6.7          5.0       3         3
-## 379           6.0          4.5       3         3
-## 380           5.7          3.5       3         3
-## 381           5.5          3.8       3         3
-## 382           5.5          3.7       3         3
-## 383           5.8          3.9       3         3
-## 384           6.0          5.1       3         3
-## 385           5.4          4.5       3         3
-## 386           6.0          4.5       3         3
-## 387           6.7          4.7       3         3
-## 388           6.3          4.4       3         3
-## 389           5.6          4.1       3         3
-## 390           5.5          4.0       3         3
-## 391           5.5          4.4       3         3
-## 392           6.1          4.6       3         3
-## 393           5.8          4.0       3         3
-## 394           5.0          3.3       2         3
-## 395           5.6          4.2       3         3
-## 396           5.7          4.2       3         3
-## 397           5.7          4.2       3         3
-## 398           6.2          4.3       3         3
-## 399           5.1          3.0       2         3
-## 400           5.7          4.1       3         3
-## 401           6.3          6.0       3         3
-## 402           5.8          5.1       3         3
-## 403           7.1          5.9       1         3
-## 404           6.3          5.6       3         3
-## 405           6.5          5.8       3         3
-## 406           7.6          6.6       1         3
-## 407           4.9          4.5       3         3
-## 408           7.3          6.3       1         3
-## 409           6.7          5.8       1         3
-## 410           7.2          6.1       1         3
-## 411           6.5          5.1       3         3
-## 412           6.4          5.3       3         3
-## 413           6.8          5.5       3         3
-## 414           5.7          5.0       3         3
-## 415           5.8          5.1       3         3
-## 416           6.4          5.3       3         3
-## 417           6.5          5.5       3         3
-## 418           7.7          6.7       1         3
-## 419           7.7          6.9       1         3
-## 420           6.0          5.0       3         3
-## 421           6.9          5.7       1         3
-## 422           5.6          4.9       3         3
-## 423           7.7          6.7       1         3
-## 424           6.3          4.9       3         3
-## 425           6.7          5.7       1         3
-## 426           7.2          6.0       1         3
-## 427           6.2          4.8       3         3
-## 428           6.1          4.9       3         3
-## 429           6.4          5.6       3         3
-## 430           7.2          5.8       1         3
-## 431           7.4          6.1       1         3
-## 432           7.9          6.4       1         3
-## 433           6.4          5.6       3         3
-## 434           6.3          5.1       3         3
-## 435           6.1          5.6       3         3
-## 436           7.7          6.1       1         3
-## 437           6.3          5.6       3         3
-## 438           6.4          5.5       3         3
-## 439           6.0          4.8       3         3
-## 440           6.9          5.4       3         3
-## 441           6.7          5.6       3         3
-## 442           6.9          5.1       3         3
-## 443           5.8          5.1       3         3
-## 444           6.8          5.9       1         3
-## 445           6.7          5.7       1         3
-## 446           6.7          5.2       3         3
-## 447           6.3          5.0       3         3
-## 448           6.5          5.2       3         3
-## 449           6.2          5.4       3         3
-## 450           5.9          5.1       3         3
-## 451           5.1          1.4       2         4
-## 452           4.9          1.4       2         4
-## 453           4.7          1.3       2         4
-## 454           4.6          1.5       2         4
-## 455           5.0          1.4       2         4
-## 456           5.4          1.7       2         4
-## 457           4.6          1.4       2         4
-## 458           5.0          1.5       2         4
-## 459           4.4          1.4       2         4
-## 460           4.9          1.5       2         4
-## 461           5.4          1.5       2         4
-## 462           4.8          1.6       2         4
-## 463           4.8          1.4       2         4
-## 464           4.3          1.1       2         4
-## 465           5.8          1.2       2         4
-## 466           5.7          1.5       2         4
-## 467           5.4          1.3       2         4
-## 468           5.1          1.4       2         4
-## 469           5.7          1.7       2         4
-## 470           5.1          1.5       2         4
-## 471           5.4          1.7       2         4
-## 472           5.1          1.5       2         4
-## 473           4.6          1.0       2         4
-## 474           5.1          1.7       2         4
-## 475           4.8          1.9       2         4
-## 476           5.0          1.6       2         4
-## 477           5.0          1.6       2         4
-## 478           5.2          1.5       2         4
-## 479           5.2          1.4       2         4
-## 480           4.7          1.6       2         4
-## 481           4.8          1.6       2         4
-## 482           5.4          1.5       2         4
-## 483           5.2          1.5       2         4
-## 484           5.5          1.4       2         4
-## 485           4.9          1.5       2         4
-## 486           5.0          1.2       2         4
-## 487           5.5          1.3       2         4
-## 488           4.9          1.4       2         4
-## 489           4.4          1.3       2         4
-## 490           5.1          1.5       2         4
-## 491           5.0          1.3       2         4
-## 492           4.5          1.3       2         4
-## 493           4.4          1.3       2         4
-## 494           5.0          1.6       2         4
-## 495           5.1          1.9       2         4
-## 496           4.8          1.4       2         4
-## 497           5.1          1.6       2         4
-## 498           4.6          1.4       2         4
-## 499           5.3          1.5       2         4
-## 500           5.0          1.4       2         4
-## 501           7.0          4.7       3         4
-## 502           6.4          4.5       3         4
-## 503           6.9          4.9       3         4
-## 504           5.5          4.0       3         4
-## 505           6.5          4.6       3         4
-## 506           5.7          4.5       3         4
-## 507           6.3          4.7       3         4
-## 508           4.9          3.3       2         4
-## 509           6.6          4.6       3         4
-## 510           5.2          3.9       3         4
-## 511           5.0          3.5       3         4
-## 512           5.9          4.2       3         4
-## 513           6.0          4.0       3         4
-## 514           6.1          4.7       3         4
-## 515           5.6          3.6       3         4
-## 516           6.7          4.4       3         4
-## 517           5.6          4.5       3         4
-## 518           5.8          4.1       3         4
-## 519           6.2          4.5       3         4
-## 520           5.6          3.9       3         4
-## 521           5.9          4.8       3         4
-## 522           6.1          4.0       3         4
-## 523           6.3          4.9       3         4
-## 524           6.1          4.7       3         4
-## 525           6.4          4.3       3         4
-## 526           6.6          4.4       3         4
-## 527           6.8          4.8       3         4
-## 528           6.7          5.0       3         4
-## 529           6.0          4.5       3         4
-## 530           5.7          3.5       3         4
-## 531           5.5          3.8       3         4
-## 532           5.5          3.7       3         4
-## 533           5.8          3.9       3         4
-## 534           6.0          5.1       3         4
-## 535           5.4          4.5       3         4
-## 536           6.0          4.5       3         4
-## 537           6.7          4.7       3         4
-## 538           6.3          4.4       3         4
-## 539           5.6          4.1       3         4
-## 540           5.5          4.0       3         4
-## 541           5.5          4.4       3         4
-## 542           6.1          4.6       3         4
-## 543           5.8          4.0       3         4
-## 544           5.0          3.3       2         4
-## 545           5.6          4.2       3         4
-## 546           5.7          4.2       3         4
-## 547           5.7          4.2       3         4
-## 548           6.2          4.3       3         4
-## 549           5.1          3.0       2         4
-## 550           5.7          4.1       3         4
-## 551           6.3          6.0       1         4
-## 552           5.8          5.1       3         4
-## 553           7.1          5.9       1         4
-## 554           6.3          5.6       3         4
-## 555           6.5          5.8       1         4
-## 556           7.6          6.6       1         4
-## 557           4.9          4.5       3         4
-## 558           7.3          6.3       1         4
-## 559           6.7          5.8       1         4
-## 560           7.2          6.1       1         4
-## 561           6.5          5.1       3         4
-## 562           6.4          5.3       3         4
-## 563           6.8          5.5       1         4
-## 564           5.7          5.0       3         4
-## 565           5.8          5.1       3         4
-## 566           6.4          5.3       3         4
-## 567           6.5          5.5       3         4
-## 568           7.7          6.7       1         4
-## 569           7.7          6.9       1         4
-## 570           6.0          5.0       3         4
-## 571           6.9          5.7       1         4
-## 572           5.6          4.9       3         4
-## 573           7.7          6.7       1         4
-## 574           6.3          4.9       3         4
-## 575           6.7          5.7       1         4
-## 576           7.2          6.0       1         4
-## 577           6.2          4.8       3         4
-## 578           6.1          4.9       3         4
-## 579           6.4          5.6       3         4
-## 580           7.2          5.8       1         4
-## 581           7.4          6.1       1         4
-## 582           7.9          6.4       1         4
-## 583           6.4          5.6       3         4
-## 584           6.3          5.1       3         4
-## 585           6.1          5.6       3         4
-## 586           7.7          6.1       1         4
-## 587           6.3          5.6       3         4
-## 588           6.4          5.5       3         4
-## 589           6.0          4.8       3         4
-## 590           6.9          5.4       1         4
-## 591           6.7          5.6       1         4
-## 592           6.9          5.1       3         4
-## 593           5.8          5.1       3         4
-## 594           6.8          5.9       1         4
-## 595           6.7          5.7       1         4
-## 596           6.7          5.2       3         4
-## 597           6.3          5.0       3         4
-## 598           6.5          5.2       3         4
-## 599           6.2          5.4       3         4
-## 600           5.9          5.1       3         4
-## 601           5.1          1.4       2         5
-## 602           4.9          1.4       2         5
-## 603           4.7          1.3       2         5
-## 604           4.6          1.5       2         5
-## 605           5.0          1.4       2         5
-## 606           5.4          1.7       2         5
-## 607           4.6          1.4       2         5
-## 608           5.0          1.5       2         5
-## 609           4.4          1.4       2         5
-## 610           4.9          1.5       2         5
-## 611           5.4          1.5       2         5
-## 612           4.8          1.6       2         5
-## 613           4.8          1.4       2         5
-## 614           4.3          1.1       2         5
-## 615           5.8          1.2       2         5
-## 616           5.7          1.5       2         5
-## 617           5.4          1.3       2         5
-## 618           5.1          1.4       2         5
-## 619           5.7          1.7       2         5
-## 620           5.1          1.5       2         5
-## 621           5.4          1.7       2         5
-## 622           5.1          1.5       2         5
-## 623           4.6          1.0       2         5
-## 624           5.1          1.7       2         5
-## 625           4.8          1.9       2         5
-## 626           5.0          1.6       2         5
-## 627           5.0          1.6       2         5
-## 628           5.2          1.5       2         5
-## 629           5.2          1.4       2         5
-## 630           4.7          1.6       2         5
-## 631           4.8          1.6       2         5
-## 632           5.4          1.5       2         5
-## 633           5.2          1.5       2         5
-## 634           5.5          1.4       2         5
-## 635           4.9          1.5       2         5
-## 636           5.0          1.2       2         5
-## 637           5.5          1.3       2         5
-## 638           4.9          1.4       2         5
-## 639           4.4          1.3       2         5
-## 640           5.1          1.5       2         5
-## 641           5.0          1.3       2         5
-## 642           4.5          1.3       2         5
-## 643           4.4          1.3       2         5
-## 644           5.0          1.6       2         5
-## 645           5.1          1.9       2         5
-## 646           4.8          1.4       2         5
-## 647           5.1          1.6       2         5
-## 648           4.6          1.4       2         5
-## 649           5.3          1.5       2         5
-## 650           5.0          1.4       2         5
-## 651           7.0          4.7       3         5
-## 652           6.4          4.5       3         5
-## 653           6.9          4.9       3         5
-## 654           5.5          4.0       3         5
-## 655           6.5          4.6       3         5
-## 656           5.7          4.5       3         5
-## 657           6.3          4.7       3         5
-## 658           4.9          3.3       2         5
-## 659           6.6          4.6       3         5
-## 660           5.2          3.9       3         5
-## 661           5.0          3.5       3         5
-## 662           5.9          4.2       3         5
-## 663           6.0          4.0       3         5
-## 664           6.1          4.7       3         5
-## 665           5.6          3.6       3         5
-## 666           6.7          4.4       3         5
-## 667           5.6          4.5       3         5
-## 668           5.8          4.1       3         5
-## 669           6.2          4.5       3         5
-## 670           5.6          3.9       3         5
-## 671           5.9          4.8       3         5
-## 672           6.1          4.0       3         5
-## 673           6.3          4.9       3         5
-## 674           6.1          4.7       3         5
-## 675           6.4          4.3       3         5
-## 676           6.6          4.4       3         5
-## 677           6.8          4.8       3         5
-## 678           6.7          5.0       3         5
-## 679           6.0          4.5       3         5
-## 680           5.7          3.5       3         5
-## 681           5.5          3.8       3         5
-## 682           5.5          3.7       3         5
-## 683           5.8          3.9       3         5
-## 684           6.0          5.1       3         5
-## 685           5.4          4.5       3         5
-## 686           6.0          4.5       3         5
-## 687           6.7          4.7       3         5
-## 688           6.3          4.4       3         5
-## 689           5.6          4.1       3         5
-## 690           5.5          4.0       3         5
-## 691           5.5          4.4       3         5
-## 692           6.1          4.6       3         5
-## 693           5.8          4.0       3         5
-## 694           5.0          3.3       3         5
-## 695           5.6          4.2       3         5
-## 696           5.7          4.2       3         5
-## 697           5.7          4.2       3         5
-## 698           6.2          4.3       3         5
-## 699           5.1          3.0       2         5
-## 700           5.7          4.1       3         5
-## 701           6.3          6.0       1         5
-## 702           5.8          5.1       3         5
-## 703           7.1          5.9       1         5
-## 704           6.3          5.6       1         5
-## 705           6.5          5.8       1         5
-## 706           7.6          6.6       1         5
-## 707           4.9          4.5       3         5
-## 708           7.3          6.3       1         5
-## 709           6.7          5.8       1         5
-## 710           7.2          6.1       1         5
-## 711           6.5          5.1       3         5
-## 712           6.4          5.3       3         5
-## 713           6.8          5.5       1         5
-## 714           5.7          5.0       3         5
-## 715           5.8          5.1       3         5
-## 716           6.4          5.3       3         5
-## 717           6.5          5.5       1         5
-## 718           7.7          6.7       1         5
-## 719           7.7          6.9       1         5
-## 720           6.0          5.0       3         5
-## 721           6.9          5.7       1         5
-## 722           5.6          4.9       3         5
-## 723           7.7          6.7       1         5
-## 724           6.3          4.9       3         5
-## 725           6.7          5.7       1         5
-## 726           7.2          6.0       1         5
-## 727           6.2          4.8       3         5
-## 728           6.1          4.9       3         5
-## 729           6.4          5.6       1         5
-## 730           7.2          5.8       1         5
-## 731           7.4          6.1       1         5
-## 732           7.9          6.4       1         5
-## 733           6.4          5.6       1         5
-## 734           6.3          5.1       3         5
-## 735           6.1          5.6       3         5
-## 736           7.7          6.1       1         5
-## 737           6.3          5.6       1         5
-## 738           6.4          5.5       1         5
-## 739           6.0          4.8       3         5
-## 740           6.9          5.4       1         5
-## 741           6.7          5.6       1         5
-## 742           6.9          5.1       3         5
-## 743           5.8          5.1       3         5
-## 744           6.8          5.9       1         5
-## 745           6.7          5.7       1         5
-## 746           6.7          5.2       3         5
-## 747           6.3          5.0       3         5
-## 748           6.5          5.2       3         5
-## 749           6.2          5.4       3         5
-## 750           5.9          5.1       3         5
-## 751           5.1          1.4       2         6
-## 752           4.9          1.4       2         6
-## 753           4.7          1.3       2         6
-## 754           4.6          1.5       2         6
-## 755           5.0          1.4       2         6
-## 756           5.4          1.7       2         6
-## 757           4.6          1.4       2         6
-## 758           5.0          1.5       2         6
-## 759           4.4          1.4       2         6
-## 760           4.9          1.5       2         6
-## 761           5.4          1.5       2         6
-## 762           4.8          1.6       2         6
-## 763           4.8          1.4       2         6
-## 764           4.3          1.1       2         6
-## 765           5.8          1.2       2         6
-## 766           5.7          1.5       2         6
-## 767           5.4          1.3       2         6
-## 768           5.1          1.4       2         6
-## 769           5.7          1.7       2         6
-## 770           5.1          1.5       2         6
-## 771           5.4          1.7       2         6
-## 772           5.1          1.5       2         6
-## 773           4.6          1.0       2         6
-## 774           5.1          1.7       2         6
-## 775           4.8          1.9       2         6
-## 776           5.0          1.6       2         6
-## 777           5.0          1.6       2         6
-## 778           5.2          1.5       2         6
-## 779           5.2          1.4       2         6
-## 780           4.7          1.6       2         6
-## 781           4.8          1.6       2         6
-## 782           5.4          1.5       2         6
-## 783           5.2          1.5       2         6
-## 784           5.5          1.4       2         6
-## 785           4.9          1.5       2         6
-## 786           5.0          1.2       2         6
-## 787           5.5          1.3       2         6
-## 788           4.9          1.4       2         6
-## 789           4.4          1.3       2         6
-## 790           5.1          1.5       2         6
-## 791           5.0          1.3       2         6
-## 792           4.5          1.3       2         6
-## 793           4.4          1.3       2         6
-## 794           5.0          1.6       2         6
-## 795           5.1          1.9       2         6
-## 796           4.8          1.4       2         6
-## 797           5.1          1.6       2         6
-## 798           4.6          1.4       2         6
-## 799           5.3          1.5       2         6
-## 800           5.0          1.4       2         6
-## 801           7.0          4.7       3         6
-## 802           6.4          4.5       3         6
-## 803           6.9          4.9       3         6
-## 804           5.5          4.0       3         6
-## 805           6.5          4.6       3         6
-## 806           5.7          4.5       3         6
-## 807           6.3          4.7       3         6
-## 808           4.9          3.3       3         6
-## 809           6.6          4.6       3         6
-## 810           5.2          3.9       3         6
-## 811           5.0          3.5       3         6
-## 812           5.9          4.2       3         6
-## 813           6.0          4.0       3         6
-## 814           6.1          4.7       3         6
-## 815           5.6          3.6       3         6
-## 816           6.7          4.4       3         6
-## 817           5.6          4.5       3         6
-## 818           5.8          4.1       3         6
-## 819           6.2          4.5       3         6
-## 820           5.6          3.9       3         6
-## 821           5.9          4.8       3         6
-## 822           6.1          4.0       3         6
-## 823           6.3          4.9       3         6
-## 824           6.1          4.7       3         6
-## 825           6.4          4.3       3         6
-## 826           6.6          4.4       3         6
-## 827           6.8          4.8       3         6
-## 828           6.7          5.0       3         6
-## 829           6.0          4.5       3         6
-## 830           5.7          3.5       3         6
-## 831           5.5          3.8       3         6
-## 832           5.5          3.7       3         6
-## 833           5.8          3.9       3         6
-## 834           6.0          5.1       3         6
-## 835           5.4          4.5       3         6
-## 836           6.0          4.5       3         6
-## 837           6.7          4.7       3         6
-## 838           6.3          4.4       3         6
-## 839           5.6          4.1       3         6
-## 840           5.5          4.0       3         6
-## 841           5.5          4.4       3         6
-## 842           6.1          4.6       3         6
-## 843           5.8          4.0       3         6
-## 844           5.0          3.3       3         6
-## 845           5.6          4.2       3         6
-## 846           5.7          4.2       3         6
-## 847           5.7          4.2       3         6
-## 848           6.2          4.3       3         6
-## 849           5.1          3.0       2         6
-## 850           5.7          4.1       3         6
-## 851           6.3          6.0       1         6
-## 852           5.8          5.1       3         6
-## 853           7.1          5.9       1         6
-## 854           6.3          5.6       1         6
-## 855           6.5          5.8       1         6
-## 856           7.6          6.6       1         6
-## 857           4.9          4.5       3         6
-## 858           7.3          6.3       1         6
-## 859           6.7          5.8       1         6
-## 860           7.2          6.1       1         6
-## 861           6.5          5.1       3         6
-## 862           6.4          5.3       3         6
-## 863           6.8          5.5       1         6
-## 864           5.7          5.0       3         6
-## 865           5.8          5.1       3         6
-## 866           6.4          5.3       3         6
-## 867           6.5          5.5       1         6
-## 868           7.7          6.7       1         6
-## 869           7.7          6.9       1         6
-## 870           6.0          5.0       3         6
-## 871           6.9          5.7       1         6
-## 872           5.6          4.9       3         6
-## 873           7.7          6.7       1         6
-## 874           6.3          4.9       3         6
-## 875           6.7          5.7       1         6
-## 876           7.2          6.0       1         6
-## 877           6.2          4.8       3         6
-## 878           6.1          4.9       3         6
-## 879           6.4          5.6       1         6
-## 880           7.2          5.8       1         6
-## 881           7.4          6.1       1         6
-## 882           7.9          6.4       1         6
-## 883           6.4          5.6       1         6
-## 884           6.3          5.1       3         6
-## 885           6.1          5.6       1         6
-## 886           7.7          6.1       1         6
-## 887           6.3          5.6       1         6
-## 888           6.4          5.5       1         6
-## 889           6.0          4.8       3         6
-## 890           6.9          5.4       1         6
-## 891           6.7          5.6       1         6
-## 892           6.9          5.1       1         6
-## 893           5.8          5.1       3         6
-## 894           6.8          5.9       1         6
-## 895           6.7          5.7       1         6
-## 896           6.7          5.2       1         6
-## 897           6.3          5.0       3         6
-## 898           6.5          5.2       3         6
-## 899           6.2          5.4       3         6
-## 900           5.9          5.1       3         6
-## 901           5.1          1.4       2         7
-## 902           4.9          1.4       2         7
-## 903           4.7          1.3       2         7
-## 904           4.6          1.5       2         7
-## 905           5.0          1.4       2         7
-## 906           5.4          1.7       2         7
-## 907           4.6          1.4       2         7
-## 908           5.0          1.5       2         7
-## 909           4.4          1.4       2         7
-## 910           4.9          1.5       2         7
-## 911           5.4          1.5       2         7
-## 912           4.8          1.6       2         7
-## 913           4.8          1.4       2         7
-## 914           4.3          1.1       2         7
-## 915           5.8          1.2       2         7
-## 916           5.7          1.5       2         7
-## 917           5.4          1.3       2         7
-## 918           5.1          1.4       2         7
-## 919           5.7          1.7       2         7
-## 920           5.1          1.5       2         7
-## 921           5.4          1.7       2         7
-## 922           5.1          1.5       2         7
-## 923           4.6          1.0       2         7
-## 924           5.1          1.7       2         7
-## 925           4.8          1.9       2         7
-## 926           5.0          1.6       2         7
-## 927           5.0          1.6       2         7
-## 928           5.2          1.5       2         7
-## 929           5.2          1.4       2         7
-## 930           4.7          1.6       2         7
-## 931           4.8          1.6       2         7
-## 932           5.4          1.5       2         7
-## 933           5.2          1.5       2         7
-## 934           5.5          1.4       2         7
-## 935           4.9          1.5       2         7
-## 936           5.0          1.2       2         7
-## 937           5.5          1.3       2         7
-## 938           4.9          1.4       2         7
-## 939           4.4          1.3       2         7
-## 940           5.1          1.5       2         7
-## 941           5.0          1.3       2         7
-## 942           4.5          1.3       2         7
-## 943           4.4          1.3       2         7
-## 944           5.0          1.6       2         7
-## 945           5.1          1.9       2         7
-## 946           4.8          1.4       2         7
-## 947           5.1          1.6       2         7
-## 948           4.6          1.4       2         7
-## 949           5.3          1.5       2         7
-## 950           5.0          1.4       2         7
-## 951           7.0          4.7       3         7
-## 952           6.4          4.5       3         7
-## 953           6.9          4.9       1         7
-## 954           5.5          4.0       3         7
-## 955           6.5          4.6       3         7
-## 956           5.7          4.5       3         7
-## 957           6.3          4.7       3         7
-## 958           4.9          3.3       3         7
-## 959           6.6          4.6       3         7
-## 960           5.2          3.9       3         7
-## 961           5.0          3.5       3         7
-## 962           5.9          4.2       3         7
-## 963           6.0          4.0       3         7
-## 964           6.1          4.7       3         7
-## 965           5.6          3.6       3         7
-## 966           6.7          4.4       3         7
-## 967           5.6          4.5       3         7
-## 968           5.8          4.1       3         7
-## 969           6.2          4.5       3         7
-## 970           5.6          3.9       3         7
-## 971           5.9          4.8       3         7
-## 972           6.1          4.0       3         7
-## 973           6.3          4.9       3         7
-## 974           6.1          4.7       3         7
-## 975           6.4          4.3       3         7
-## 976           6.6          4.4       3         7
-## 977           6.8          4.8       3         7
-## 978           6.7          5.0       3         7
-## 979           6.0          4.5       3         7
-## 980           5.7          3.5       3         7
-## 981           5.5          3.8       3         7
-## 982           5.5          3.7       3         7
-## 983           5.8          3.9       3         7
-## 984           6.0          5.1       3         7
-## 985           5.4          4.5       3         7
-## 986           6.0          4.5       3         7
-## 987           6.7          4.7       3         7
-## 988           6.3          4.4       3         7
-## 989           5.6          4.1       3         7
-## 990           5.5          4.0       3         7
-## 991           5.5          4.4       3         7
-## 992           6.1          4.6       3         7
-## 993           5.8          4.0       3         7
-## 994           5.0          3.3       3         7
-## 995           5.6          4.2       3         7
-## 996           5.7          4.2       3         7
-## 997           5.7          4.2       3         7
-## 998           6.2          4.3       3         7
-## 999           5.1          3.0       2         7
-## 1000          5.7          4.1       3         7
-## 1001          6.3          6.0       1         7
-## 1002          5.8          5.1       3         7
-## 1003          7.1          5.9       1         7
-## 1004          6.3          5.6       1         7
-## 1005          6.5          5.8       1         7
-## 1006          7.6          6.6       1         7
-## 1007          4.9          4.5       3         7
-## 1008          7.3          6.3       1         7
-## 1009          6.7          5.8       1         7
-## 1010          7.2          6.1       1         7
-## 1011          6.5          5.1       3         7
-## 1012          6.4          5.3       1         7
-## 1013          6.8          5.5       1         7
-## 1014          5.7          5.0       3         7
-## 1015          5.8          5.1       3         7
-## 1016          6.4          5.3       1         7
-## 1017          6.5          5.5       1         7
-## 1018          7.7          6.7       1         7
-## 1019          7.7          6.9       1         7
-## 1020          6.0          5.0       3         7
-## 1021          6.9          5.7       1         7
-## 1022          5.6          4.9       3         7
-## 1023          7.7          6.7       1         7
-## 1024          6.3          4.9       3         7
-## 1025          6.7          5.7       1         7
-## 1026          7.2          6.0       1         7
-## 1027          6.2          4.8       3         7
-## 1028          6.1          4.9       3         7
-## 1029          6.4          5.6       1         7
-## 1030          7.2          5.8       1         7
-## 1031          7.4          6.1       1         7
-## 1032          7.9          6.4       1         7
-## 1033          6.4          5.6       1         7
-## 1034          6.3          5.1       3         7
-## 1035          6.1          5.6       1         7
-## 1036          7.7          6.1       1         7
-## 1037          6.3          5.6       1         7
-## 1038          6.4          5.5       1         7
-## 1039          6.0          4.8       3         7
-## 1040          6.9          5.4       1         7
-## 1041          6.7          5.6       1         7
-## 1042          6.9          5.1       1         7
-## 1043          5.8          5.1       3         7
-## 1044          6.8          5.9       1         7
-## 1045          6.7          5.7       1         7
-## 1046          6.7          5.2       1         7
-## 1047          6.3          5.0       3         7
-## 1048          6.5          5.2       1         7
-## 1049          6.2          5.4       1         7
-## 1050          5.9          5.1       3         7
-## 1051          5.1          1.4       2         8
-## 1052          4.9          1.4       2         8
-## 1053          4.7          1.3       2         8
-## 1054          4.6          1.5       2         8
-## 1055          5.0          1.4       2         8
-## 1056          5.4          1.7       2         8
-## 1057          4.6          1.4       2         8
-## 1058          5.0          1.5       2         8
-## 1059          4.4          1.4       2         8
-## 1060          4.9          1.5       2         8
-## 1061          5.4          1.5       2         8
-## 1062          4.8          1.6       2         8
-## 1063          4.8          1.4       2         8
-## 1064          4.3          1.1       2         8
-## 1065          5.8          1.2       2         8
-## 1066          5.7          1.5       2         8
-## 1067          5.4          1.3       2         8
-## 1068          5.1          1.4       2         8
-## 1069          5.7          1.7       2         8
-## 1070          5.1          1.5       2         8
-## 1071          5.4          1.7       2         8
-## 1072          5.1          1.5       2         8
-## 1073          4.6          1.0       2         8
-## 1074          5.1          1.7       2         8
-## 1075          4.8          1.9       2         8
-## 1076          5.0          1.6       2         8
-## 1077          5.0          1.6       2         8
-## 1078          5.2          1.5       2         8
-## 1079          5.2          1.4       2         8
-## 1080          4.7          1.6       2         8
-## 1081          4.8          1.6       2         8
-## 1082          5.4          1.5       2         8
-## 1083          5.2          1.5       2         8
-## 1084          5.5          1.4       2         8
-## 1085          4.9          1.5       2         8
-## 1086          5.0          1.2       2         8
-## 1087          5.5          1.3       2         8
-## 1088          4.9          1.4       2         8
-## 1089          4.4          1.3       2         8
-## 1090          5.1          1.5       2         8
-## 1091          5.0          1.3       2         8
-## 1092          4.5          1.3       2         8
-## 1093          4.4          1.3       2         8
-## 1094          5.0          1.6       2         8
-## 1095          5.1          1.9       2         8
-## 1096          4.8          1.4       2         8
-## 1097          5.1          1.6       2         8
-## 1098          4.6          1.4       2         8
-## 1099          5.3          1.5       2         8
-## 1100          5.0          1.4       2         8
-## 1101          7.0          4.7       1         8
-## 1102          6.4          4.5       3         8
-## 1103          6.9          4.9       1         8
-## 1104          5.5          4.0       3         8
-## 1105          6.5          4.6       3         8
-## 1106          5.7          4.5       3         8
-## 1107          6.3          4.7       3         8
-## 1108          4.9          3.3       3         8
-## 1109          6.6          4.6       3         8
-## 1110          5.2          3.9       3         8
-## 1111          5.0          3.5       3         8
-## 1112          5.9          4.2       3         8
-## 1113          6.0          4.0       3         8
-## 1114          6.1          4.7       3         8
-## 1115          5.6          3.6       3         8
-## 1116          6.7          4.4       3         8
-## 1117          5.6          4.5       3         8
-## 1118          5.8          4.1       3         8
-## 1119          6.2          4.5       3         8
-## 1120          5.6          3.9       3         8
-## 1121          5.9          4.8       3         8
-## 1122          6.1          4.0       3         8
-## 1123          6.3          4.9       3         8
-## 1124          6.1          4.7       3         8
-## 1125          6.4          4.3       3         8
-## 1126          6.6          4.4       3         8
-## 1127          6.8          4.8       3         8
-## 1128          6.7          5.0       1         8
-## 1129          6.0          4.5       3         8
-## 1130          5.7          3.5       3         8
-## 1131          5.5          3.8       3         8
-## 1132          5.5          3.7       3         8
-## 1133          5.8          3.9       3         8
-## 1134          6.0          5.1       3         8
-## 1135          5.4          4.5       3         8
-## 1136          6.0          4.5       3         8
-## 1137          6.7          4.7       3         8
-## 1138          6.3          4.4       3         8
-## 1139          5.6          4.1       3         8
-## 1140          5.5          4.0       3         8
-## 1141          5.5          4.4       3         8
-## 1142          6.1          4.6       3         8
-## 1143          5.8          4.0       3         8
-## 1144          5.0          3.3       3         8
-## 1145          5.6          4.2       3         8
-## 1146          5.7          4.2       3         8
-## 1147          5.7          4.2       3         8
-## 1148          6.2          4.3       3         8
-## 1149          5.1          3.0       2         8
-## 1150          5.7          4.1       3         8
-## 1151          6.3          6.0       1         8
-## 1152          5.8          5.1       3         8
-## 1153          7.1          5.9       1         8
-## 1154          6.3          5.6       1         8
-## 1155          6.5          5.8       1         8
-## 1156          7.6          6.6       1         8
-## 1157          4.9          4.5       3         8
-## 1158          7.3          6.3       1         8
-## 1159          6.7          5.8       1         8
-## 1160          7.2          6.1       1         8
-## 1161          6.5          5.1       1         8
-## 1162          6.4          5.3       1         8
-## 1163          6.8          5.5       1         8
-## 1164          5.7          5.0       3         8
-## 1165          5.8          5.1       3         8
-## 1166          6.4          5.3       1         8
-## 1167          6.5          5.5       1         8
-## 1168          7.7          6.7       1         8
-## 1169          7.7          6.9       1         8
-## 1170          6.0          5.0       3         8
-## 1171          6.9          5.7       1         8
-## 1172          5.6          4.9       3         8
-## 1173          7.7          6.7       1         8
-## 1174          6.3          4.9       3         8
-## 1175          6.7          5.7       1         8
-## 1176          7.2          6.0       1         8
-## 1177          6.2          4.8       3         8
-## 1178          6.1          4.9       3         8
-## 1179          6.4          5.6       1         8
-## 1180          7.2          5.8       1         8
-## 1181          7.4          6.1       1         8
-## 1182          7.9          6.4       1         8
-## 1183          6.4          5.6       1         8
-## 1184          6.3          5.1       3         8
-## 1185          6.1          5.6       1         8
-## 1186          7.7          6.1       1         8
-## 1187          6.3          5.6       1         8
-## 1188          6.4          5.5       1         8
-## 1189          6.0          4.8       3         8
-## 1190          6.9          5.4       1         8
-## 1191          6.7          5.6       1         8
-## 1192          6.9          5.1       1         8
-## 1193          5.8          5.1       3         8
-## 1194          6.8          5.9       1         8
-## 1195          6.7          5.7       1         8
-## 1196          6.7          5.2       1         8
-## 1197          6.3          5.0       3         8
-## 1198          6.5          5.2       1         8
-## 1199          6.2          5.4       1         8
-## 1200          5.9          5.1       3         8
-## 1201          5.1          1.4       2         9
-## 1202          4.9          1.4       2         9
-## 1203          4.7          1.3       2         9
-## 1204          4.6          1.5       2         9
-## 1205          5.0          1.4       2         9
-## 1206          5.4          1.7       2         9
-## 1207          4.6          1.4       2         9
-## 1208          5.0          1.5       2         9
-## 1209          4.4          1.4       2         9
-## 1210          4.9          1.5       2         9
-## 1211          5.4          1.5       2         9
-## 1212          4.8          1.6       2         9
-## 1213          4.8          1.4       2         9
-## 1214          4.3          1.1       2         9
-## 1215          5.8          1.2       2         9
-## 1216          5.7          1.5       2         9
-## 1217          5.4          1.3       2         9
-## 1218          5.1          1.4       2         9
-## 1219          5.7          1.7       2         9
-## 1220          5.1          1.5       2         9
-## 1221          5.4          1.7       2         9
-## 1222          5.1          1.5       2         9
-## 1223          4.6          1.0       2         9
-## 1224          5.1          1.7       2         9
-## 1225          4.8          1.9       2         9
-## 1226          5.0          1.6       2         9
-## 1227          5.0          1.6       2         9
-## 1228          5.2          1.5       2         9
-## 1229          5.2          1.4       2         9
-## 1230          4.7          1.6       2         9
-## 1231          4.8          1.6       2         9
-## 1232          5.4          1.5       2         9
-## 1233          5.2          1.5       2         9
-## 1234          5.5          1.4       2         9
-## 1235          4.9          1.5       2         9
-## 1236          5.0          1.2       2         9
-## 1237          5.5          1.3       2         9
-## 1238          4.9          1.4       2         9
-## 1239          4.4          1.3       2         9
-## 1240          5.1          1.5       2         9
-## 1241          5.0          1.3       2         9
-## 1242          4.5          1.3       2         9
-## 1243          4.4          1.3       2         9
-## 1244          5.0          1.6       2         9
-## 1245          5.1          1.9       2         9
-## 1246          4.8          1.4       2         9
-## 1247          5.1          1.6       2         9
-## 1248          4.6          1.4       2         9
-## 1249          5.3          1.5       2         9
-## 1250          5.0          1.4       2         9
-## 1251          7.0          4.7       1         9
-## 1252          6.4          4.5       3         9
-## 1253          6.9          4.9       1         9
-## 1254          5.5          4.0       3         9
-## 1255          6.5          4.6       3         9
-## 1256          5.7          4.5       3         9
-## 1257          6.3          4.7       3         9
-## 1258          4.9          3.3       3         9
-## 1259          6.6          4.6       3         9
-## 1260          5.2          3.9       3         9
-## 1261          5.0          3.5       3         9
-## 1262          5.9          4.2       3         9
-## 1263          6.0          4.0       3         9
-## 1264          6.1          4.7       3         9
-## 1265          5.6          3.6       3         9
-## 1266          6.7          4.4       3         9
-## 1267          5.6          4.5       3         9
-## 1268          5.8          4.1       3         9
-## 1269          6.2          4.5       3         9
-## 1270          5.6          3.9       3         9
-## 1271          5.9          4.8       3         9
-## 1272          6.1          4.0       3         9
-## 1273          6.3          4.9       3         9
-## 1274          6.1          4.7       3         9
-## 1275          6.4          4.3       3         9
-## 1276          6.6          4.4       3         9
-## 1277          6.8          4.8       1         9
-## 1278          6.7          5.0       1         9
-## 1279          6.0          4.5       3         9
-## 1280          5.7          3.5       3         9
-## 1281          5.5          3.8       3         9
-## 1282          5.5          3.7       3         9
-## 1283          5.8          3.9       3         9
-## 1284          6.0          5.1       3         9
-## 1285          5.4          4.5       3         9
-## 1286          6.0          4.5       3         9
-## 1287          6.7          4.7       3         9
-## 1288          6.3          4.4       3         9
-## 1289          5.6          4.1       3         9
-## 1290          5.5          4.0       3         9
-## 1291          5.5          4.4       3         9
-## 1292          6.1          4.6       3         9
-## 1293          5.8          4.0       3         9
-## 1294          5.0          3.3       3         9
-## 1295          5.6          4.2       3         9
-## 1296          5.7          4.2       3         9
-## 1297          5.7          4.2       3         9
-## 1298          6.2          4.3       3         9
-## 1299          5.1          3.0       2         9
-## 1300          5.7          4.1       3         9
-## 1301          6.3          6.0       1         9
-## 1302          5.8          5.1       3         9
-## 1303          7.1          5.9       1         9
-## 1304          6.3          5.6       1         9
-## 1305          6.5          5.8       1         9
-## 1306          7.6          6.6       1         9
-## 1307          4.9          4.5       3         9
-## 1308          7.3          6.3       1         9
-## 1309          6.7          5.8       1         9
-## 1310          7.2          6.1       1         9
-## 1311          6.5          5.1       1         9
-## 1312          6.4          5.3       1         9
-## 1313          6.8          5.5       1         9
-## 1314          5.7          5.0       3         9
-## 1315          5.8          5.1       3         9
-## 1316          6.4          5.3       1         9
-## 1317          6.5          5.5       1         9
-## 1318          7.7          6.7       1         9
-## 1319          7.7          6.9       1         9
-## 1320          6.0          5.0       3         9
-## 1321          6.9          5.7       1         9
-## 1322          5.6          4.9       3         9
-## 1323          7.7          6.7       1         9
-## 1324          6.3          4.9       3         9
-## 1325          6.7          5.7       1         9
-## 1326          7.2          6.0       1         9
-## 1327          6.2          4.8       3         9
-## 1328          6.1          4.9       3         9
-## 1329          6.4          5.6       1         9
-## 1330          7.2          5.8       1         9
-## 1331          7.4          6.1       1         9
-## 1332          7.9          6.4       1         9
-## 1333          6.4          5.6       1         9
-## 1334          6.3          5.1       3         9
-## 1335          6.1          5.6       1         9
-## 1336          7.7          6.1       1         9
-## 1337          6.3          5.6       1         9
-## 1338          6.4          5.5       1         9
-## 1339          6.0          4.8       3         9
-## 1340          6.9          5.4       1         9
-## 1341          6.7          5.6       1         9
-## 1342          6.9          5.1       1         9
-## 1343          5.8          5.1       3         9
-## 1344          6.8          5.9       1         9
-## 1345          6.7          5.7       1         9
-## 1346          6.7          5.2       1         9
-## 1347          6.3          5.0       3         9
-## 1348          6.5          5.2       1         9
-## 1349          6.2          5.4       1         9
-## 1350          5.9          5.1       3         9
-## 1351          5.1          1.4       2        10
-## 1352          4.9          1.4       2        10
-## 1353          4.7          1.3       2        10
-## 1354          4.6          1.5       2        10
-## 1355          5.0          1.4       2        10
-## 1356          5.4          1.7       2        10
-## 1357          4.6          1.4       2        10
-## 1358          5.0          1.5       2        10
-## 1359          4.4          1.4       2        10
-## 1360          4.9          1.5       2        10
-## 1361          5.4          1.5       2        10
-## 1362          4.8          1.6       2        10
-## 1363          4.8          1.4       2        10
-## 1364          4.3          1.1       2        10
-## 1365          5.8          1.2       2        10
-## 1366          5.7          1.5       2        10
-## 1367          5.4          1.3       2        10
-## 1368          5.1          1.4       2        10
-## 1369          5.7          1.7       2        10
-## 1370          5.1          1.5       2        10
-## 1371          5.4          1.7       2        10
-## 1372          5.1          1.5       2        10
-## 1373          4.6          1.0       2        10
-## 1374          5.1          1.7       2        10
-## 1375          4.8          1.9       2        10
-## 1376          5.0          1.6       2        10
-## 1377          5.0          1.6       2        10
-## 1378          5.2          1.5       2        10
-## 1379          5.2          1.4       2        10
-## 1380          4.7          1.6       2        10
-## 1381          4.8          1.6       2        10
-## 1382          5.4          1.5       2        10
-## 1383          5.2          1.5       2        10
-## 1384          5.5          1.4       2        10
-## 1385          4.9          1.5       2        10
-## 1386          5.0          1.2       2        10
-## 1387          5.5          1.3       2        10
-## 1388          4.9          1.4       2        10
-## 1389          4.4          1.3       2        10
-## 1390          5.1          1.5       2        10
-## 1391          5.0          1.3       2        10
-## 1392          4.5          1.3       2        10
-## 1393          4.4          1.3       2        10
-## 1394          5.0          1.6       2        10
-## 1395          5.1          1.9       2        10
-## 1396          4.8          1.4       2        10
-## 1397          5.1          1.6       2        10
-## 1398          4.6          1.4       2        10
-## 1399          5.3          1.5       2        10
-## 1400          5.0          1.4       2        10
-## 1401          7.0          4.7       1        10
-## 1402          6.4          4.5       3        10
-## 1403          6.9          4.9       1        10
-## 1404          5.5          4.0       3        10
-## 1405          6.5          4.6       3        10
-## 1406          5.7          4.5       3        10
-## 1407          6.3          4.7       3        10
-## 1408          4.9          3.3       3        10
-## 1409          6.6          4.6       3        10
-## 1410          5.2          3.9       3        10
-## 1411          5.0          3.5       3        10
-## 1412          5.9          4.2       3        10
-## 1413          6.0          4.0       3        10
-## 1414          6.1          4.7       3        10
-## 1415          5.6          3.6       3        10
-## 1416          6.7          4.4       3        10
-## 1417          5.6          4.5       3        10
-## 1418          5.8          4.1       3        10
-## 1419          6.2          4.5       3        10
-## 1420          5.6          3.9       3        10
-## 1421          5.9          4.8       3        10
-## 1422          6.1          4.0       3        10
-## 1423          6.3          4.9       3        10
-## 1424          6.1          4.7       3        10
-## 1425          6.4          4.3       3        10
-## 1426          6.6          4.4       3        10
-## 1427          6.8          4.8       1        10
-## 1428          6.7          5.0       1        10
-## 1429          6.0          4.5       3        10
-## 1430          5.7          3.5       3        10
-## 1431          5.5          3.8       3        10
-## 1432          5.5          3.7       3        10
-## 1433          5.8          3.9       3        10
-## 1434          6.0          5.1       3        10
-## 1435          5.4          4.5       3        10
-## 1436          6.0          4.5       3        10
-## 1437          6.7          4.7       3        10
-## 1438          6.3          4.4       3        10
-## 1439          5.6          4.1       3        10
-## 1440          5.5          4.0       3        10
-## 1441          5.5          4.4       3        10
-## 1442          6.1          4.6       3        10
-## 1443          5.8          4.0       3        10
-## 1444          5.0          3.3       3        10
-## 1445          5.6          4.2       3        10
-## 1446          5.7          4.2       3        10
-## 1447          5.7          4.2       3        10
-## 1448          6.2          4.3       3        10
-## 1449          5.1          3.0       2        10
-## 1450          5.7          4.1       3        10
-## 1451          6.3          6.0       1        10
-## 1452          5.8          5.1       3        10
-## 1453          7.1          5.9       1        10
-## 1454          6.3          5.6       1        10
-## 1455          6.5          5.8       1        10
-## 1456          7.6          6.6       1        10
-## 1457          4.9          4.5       3        10
-## 1458          7.3          6.3       1        10
-## 1459          6.7          5.8       1        10
-## 1460          7.2          6.1       1        10
-## 1461          6.5          5.1       1        10
-## 1462          6.4          5.3       1        10
-## 1463          6.8          5.5       1        10
-## 1464          5.7          5.0       3        10
-## 1465          5.8          5.1       3        10
-## 1466          6.4          5.3       1        10
-## 1467          6.5          5.5       1        10
-## 1468          7.7          6.7       1        10
-## 1469          7.7          6.9       1        10
-## 1470          6.0          5.0       3        10
-## 1471          6.9          5.7       1        10
-## 1472          5.6          4.9       3        10
-## 1473          7.7          6.7       1        10
-## 1474          6.3          4.9       3        10
-## 1475          6.7          5.7       1        10
-## 1476          7.2          6.0       1        10
-## 1477          6.2          4.8       3        10
-## 1478          6.1          4.9       3        10
-## 1479          6.4          5.6       1        10
-## 1480          7.2          5.8       1        10
-## 1481          7.4          6.1       1        10
-## 1482          7.9          6.4       1        10
-## 1483          6.4          5.6       1        10
-## 1484          6.3          5.1       1        10
-## 1485          6.1          5.6       1        10
-## 1486          7.7          6.1       1        10
-## 1487          6.3          5.6       1        10
-## 1488          6.4          5.5       1        10
-## 1489          6.0          4.8       3        10
-## 1490          6.9          5.4       1        10
-## 1491          6.7          5.6       1        10
-## 1492          6.9          5.1       1        10
-## 1493          5.8          5.1       3        10
-## 1494          6.8          5.9       1        10
-## 1495          6.7          5.7       1        10
-## 1496          6.7          5.2       1        10
-## 1497          6.3          5.0       3        10
-## 1498          6.5          5.2       1        10
-## 1499          6.2          5.4       1        10
-## 1500          5.9          5.1       3        10
-## 1501          5.1          1.4       2        11
-## 1502          4.9          1.4       2        11
-## 1503          4.7          1.3       2        11
-## 1504          4.6          1.5       2        11
-## 1505          5.0          1.4       2        11
-## 1506          5.4          1.7       2        11
-## 1507          4.6          1.4       2        11
-## 1508          5.0          1.5       2        11
-## 1509          4.4          1.4       2        11
-## 1510          4.9          1.5       2        11
-## 1511          5.4          1.5       2        11
-## 1512          4.8          1.6       2        11
-## 1513          4.8          1.4       2        11
-## 1514          4.3          1.1       2        11
-## 1515          5.8          1.2       2        11
-## 1516          5.7          1.5       2        11
-## 1517          5.4          1.3       2        11
-## 1518          5.1          1.4       2        11
-## 1519          5.7          1.7       2        11
-## 1520          5.1          1.5       2        11
-## 1521          5.4          1.7       2        11
-## 1522          5.1          1.5       2        11
-## 1523          4.6          1.0       2        11
-## 1524          5.1          1.7       2        11
-## 1525          4.8          1.9       2        11
-## 1526          5.0          1.6       2        11
-## 1527          5.0          1.6       2        11
-## 1528          5.2          1.5       2        11
-## 1529          5.2          1.4       2        11
-## 1530          4.7          1.6       2        11
-## 1531          4.8          1.6       2        11
-## 1532          5.4          1.5       2        11
-## 1533          5.2          1.5       2        11
-## 1534          5.5          1.4       2        11
-## 1535          4.9          1.5       2        11
-## 1536          5.0          1.2       2        11
-## 1537          5.5          1.3       2        11
-## 1538          4.9          1.4       2        11
-## 1539          4.4          1.3       2        11
-## 1540          5.1          1.5       2        11
-## 1541          5.0          1.3       2        11
-## 1542          4.5          1.3       2        11
-## 1543          4.4          1.3       2        11
-## 1544          5.0          1.6       2        11
-## 1545          5.1          1.9       2        11
-## 1546          4.8          1.4       2        11
-## 1547          5.1          1.6       2        11
-## 1548          4.6          1.4       2        11
-## 1549          5.3          1.5       2        11
-## 1550          5.0          1.4       2        11
-## 1551          7.0          4.7       1        11
-## 1552          6.4          4.5       3        11
-## 1553          6.9          4.9       1        11
-## 1554          5.5          4.0       3        11
-## 1555          6.5          4.6       3        11
-## 1556          5.7          4.5       3        11
-## 1557          6.3          4.7       3        11
-## 1558          4.9          3.3       3        11
-## 1559          6.6          4.6       3        11
-## 1560          5.2          3.9       3        11
-## 1561          5.0          3.5       3        11
-## 1562          5.9          4.2       3        11
-## 1563          6.0          4.0       3        11
-## 1564          6.1          4.7       3        11
-## 1565          5.6          3.6       3        11
-## 1566          6.7          4.4       3        11
-## 1567          5.6          4.5       3        11
-## 1568          5.8          4.1       3        11
-## 1569          6.2          4.5       3        11
-## 1570          5.6          3.9       3        11
-## 1571          5.9          4.8       3        11
-## 1572          6.1          4.0       3        11
-## 1573          6.3          4.9       3        11
-## 1574          6.1          4.7       3        11
-## 1575          6.4          4.3       3        11
-## 1576          6.6          4.4       3        11
-## 1577          6.8          4.8       1        11
-## 1578          6.7          5.0       1        11
-## 1579          6.0          4.5       3        11
-## 1580          5.7          3.5       3        11
-## 1581          5.5          3.8       3        11
-## 1582          5.5          3.7       3        11
-## 1583          5.8          3.9       3        11
-## 1584          6.0          5.1       3        11
-## 1585          5.4          4.5       3        11
-## 1586          6.0          4.5       3        11
-## 1587          6.7          4.7       3        11
-## 1588          6.3          4.4       3        11
-## 1589          5.6          4.1       3        11
-## 1590          5.5          4.0       3        11
-## 1591          5.5          4.4       3        11
-## 1592          6.1          4.6       3        11
-## 1593          5.8          4.0       3        11
-## 1594          5.0          3.3       3        11
-## 1595          5.6          4.2       3        11
-## 1596          5.7          4.2       3        11
-## 1597          5.7          4.2       3        11
-## 1598          6.2          4.3       3        11
-## 1599          5.1          3.0       2        11
-## 1600          5.7          4.1       3        11
-## 1601          6.3          6.0       1        11
-## 1602          5.8          5.1       3        11
-## 1603          7.1          5.9       1        11
-## 1604          6.3          5.6       1        11
-## 1605          6.5          5.8       1        11
-## 1606          7.6          6.6       1        11
-## 1607          4.9          4.5       3        11
-## 1608          7.3          6.3       1        11
-## 1609          6.7          5.8       1        11
-## 1610          7.2          6.1       1        11
-## 1611          6.5          5.1       1        11
-## 1612          6.4          5.3       1        11
-## 1613          6.8          5.5       1        11
-## 1614          5.7          5.0       3        11
-## 1615          5.8          5.1       3        11
-## 1616          6.4          5.3       1        11
-## 1617          6.5          5.5       1        11
-## 1618          7.7          6.7       1        11
-## 1619          7.7          6.9       1        11
-## 1620          6.0          5.0       3        11
-## 1621          6.9          5.7       1        11
-## 1622          5.6          4.9       3        11
-## 1623          7.7          6.7       1        11
-## 1624          6.3          4.9       3        11
-## 1625          6.7          5.7       1        11
-## 1626          7.2          6.0       1        11
-## 1627          6.2          4.8       3        11
-## 1628          6.1          4.9       3        11
-## 1629          6.4          5.6       1        11
-## 1630          7.2          5.8       1        11
-## 1631          7.4          6.1       1        11
-## 1632          7.9          6.4       1        11
-## 1633          6.4          5.6       1        11
-## 1634          6.3          5.1       1        11
-## 1635          6.1          5.6       1        11
-## 1636          7.7          6.1       1        11
-## 1637          6.3          5.6       1        11
-## 1638          6.4          5.5       1        11
-## 1639          6.0          4.8       3        11
-## 1640          6.9          5.4       1        11
-## 1641          6.7          5.6       1        11
-## 1642          6.9          5.1       1        11
-## 1643          5.8          5.1       3        11
-## 1644          6.8          5.9       1        11
-## 1645          6.7          5.7       1        11
-## 1646          6.7          5.2       1        11
-## 1647          6.3          5.0       3        11
-## 1648          6.5          5.2       1        11
-## 1649          6.2          5.4       1        11
-## 1650          5.9          5.1       3        11
-## 
-## $`All Centroids`
-##     Sepal.Length Petal.Length cluster iteration
-## 136     7.700000     6.100000       1         1
-## 62      5.900000     4.200000       2         1
-## 134     6.300000     5.100000       3         1
-## 1       7.423077     6.269231       1         2
-## 2       5.303448     2.574713       2         2
-## 3       6.372000     5.164000       3         2
-## 11      7.423077     6.269231       1         3
-## 21      5.070968     1.880645       2         3
-## 31      6.208000     4.874667       3         3
-## 12      7.264706     6.141176       1         4
-## 22      5.005556     1.596296       2         4
-## 32      6.110127     4.722785       3         4
-## 13      7.122727     6.031818       1         5
-## 23      5.005660     1.560377       2         5
-## 33      6.060000     4.644000       3         5
-## 14      6.964286     5.932143       1         6
-## 24      5.005769     1.526923       2         6
-## 34      6.017143     4.545714       3         6
-## 15      6.925806     5.870968       1         7
-## 25      5.007843     1.492157       2         7
-## 35      5.976471     4.494118       3         7
-## 16      6.863889     5.780556       1         8
-## 26      5.007843     1.492157       2         8
-## 36      5.936508     4.436508       3         8
-## 17      6.853846     5.715385       1         9
-## 27      5.007843     1.492157       2         9
-## 37      5.896667     4.411667       3         9
-## 18      6.852500     5.692500       1        10
-## 28      5.007843     1.492157       2        10
-## 38      5.881356     4.405085       3        10
-## 19      6.839024     5.678049       1        11
-## 29      5.007843     1.492157       2        11
-## 39      5.874138     4.393103       3        11</code></pre>
+<pre class="r"><code>set.seed(54)
+#call the function with k equal to 3
+result &lt;- k_means_iterations(data = iris3, k = 3)
+
+#save the tibble with all of the assignments to a new data frame
+graph_df &lt;- result$`All Assignments`
+#save the tibble with all the centroids to a new data frame
+centers_df &lt;- result$`All Centroids`</code></pre>
+<pre class="r"><code>#use the results to make an animated graph of the assignments on each iteration
+graph_df %&gt;% 
+  ggplot(aes(x = Sepal.Length,
+             y = Petal.Length, 
+             color = as.factor(cluster))) + 
+  geom_point() + 
+  geom_point(data = centers_df, size = 5, shape = 10) + 
+  transition_states(iteration, transition_length = 0, state_length = 10) + 
+  labs(title = &quot;Iteration: {closest_state}&quot;,
+       color = &quot;Cluster&quot;) + 
+  theme_bw()</code></pre>
+<p><img src="data:image/gif;base64,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3Mix/1JCYx1DihxJsuSYj51MqlzJsqXLHepAvpxJs6bNm08AKsTJs6fPnxpj5gRKtKjRowWjpSGAtKnTp1C5TRNAgIAAAVGzat3KVdatqwyYAriKtavZs2jTHvIEtpHYBWDVyp1Lt66YTWU3vWVQ1q7fv4ADB+ET19NevoITK17MuMOiKHCpqTqMuLHly5gbQ6EmjRjlyplDix6tdmKFz6BJq17NGqmUvhFQR25Nu7btmrBjU8h9u7fv3xB5P5A9G7jx40clPhXugLgC5sijS3d5ESn0Bs7HTt/OnaVF6xaya+9OvnxQiwFdXg9bYb359/DzoU/fkqz9+1er4t8fN77////4zHeUewqIRyCACCaojYBGHZjdgQpGKGFEFTVF4IMTZqghNtWBRwGGG4YoYjLKOXXhbiOmqOKKVbjnHIQsxijjjC24OAGMNOao444drEccjjwGKeSQDlwnG5BEJqlkjv01BwGSS0YppYrMfQbllFhmOWGTBTbApZZghrkiWQuIRaaYaKY5JlVWXanmm3CSJ16cdNZp55145qnnnnz26eefgAYq6KCEFmrooYiisVmijDbaVIeORiopTt9Nauml3qGH6aacdsRgp6CGutCnopZqqj6knqrqqu5UyuqrsJYDaay01srhorbmquuuvPbq66/ABqsIrsIWaywmsx6r7LL/iLjK7LPQ/pFqtNRW+8a01mar7RfYbuvtt1V0C+645BrhbLnopjtEsuq2664OJb4r77z01mvvvfjmq+++/GYTb78AB6yGaQIX3O+5Bic8r7gKN0wuww5HvC3EEldMLcUWZ8wswhp3fDHBHods7b8il2zyySinrPLKLLfs8sswxyzzzDTXbPPNOOes88489+zzz0AHLfTQRBdt9NFIJ6300kw37fTTUEct9dRUV2311VhnrfXWXHft9ddghy322GSXbfbZaKet9tpst+3223DHLffcdNdNI352563WmePxrfffT1lVpJduAm54SagJV/jhjGv0ZXFeNi45bhJAt/jk/5gTtN51l2fueT7ubf756BuFfiPpqD9EoOmpt27Q6ii6LrtAsJ8+++2gW8A67rzHc2DtvQePzu/tCW+8OY/Dxd/ynR/vPC3Ex/789NhEXzn12FdfvO3Zd88M8BE07/34ooD/JPnoC7P7+YAN4P4A6b+8/gPiA/X++/G7LHr47d+P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aeedeOap55589unnn4AGKuighBZq6KGIJqrooow26uijkEYq6aSUVmrppZhmqummnHbq6aeghirqqKSWauqpqKaq6qqsturqq7DGKuustNZq66245qrrrrz26uuvwAYr7LDEFmvsscgmq+yy/8w26+yz0EYr7bTUVmvttdhmq+223HJaV7fgGhlguOQCKVeD5aaL4rnvqesujOyi++68HsZL770u2ovvviqey++/KY4L8MAlfkvwwQgnrPDCDDfs8MMQRyzxxBRXbPHFGGes8cYcd+zxxyCHLPLIJJds8skop6zyyiy37PLLMMcs88w012zzzTjnrPPOPPfs889ABy300EQXbfTRSCet9NJMN+3001BHLfXUVFdt9dVYZ6311lx37fXXYIct9thka21w2WiHInDabG/ib9twM6Jv3HQbMnfdeJvGbt5833F334DD8XbghAsOV+GcKsXf2YhX2l0aTc3X+ORFROfddP+UZ25Fb1lp7jkSlgOE3OekB5HabKWnrsNnlqnu+gstsf767C7ELhjtuJ8Amu25907C7oz5LjwIwN8+/PHcWcA78swr73zwzUeP+vSdS289AdgT8N1SS0XOfejW9579AtoHMH7r1YcvPPYOlE++9sfFr37u8LcvnQL1ayD5/IizDwH8mchf8vhHPwkA0H76IyDuBIjAyzGAgcZTYOog2ID6vYKC8pMg6TBIvtHh7wL702DeONhBDwLAgtQToedI+EHMPVB0MFTh51h4wvShkDYy3KAFKHiGG64ihDmsGw1r6IoZHBAAkQvi64Y4xKQokXbZi6IUp0jFKTrwiUvcYQX/hojFzDGRAlzsohe3CEYxio+MEwijGRtHQxaqcY39K6MB4VjANNqRjgu84//weMYIYPCNfOzfH/cYSN9REIKALOTk/PfCByZSkZQ7HxElCUnmWbGS83skJjfJyU568pOgDKUoR0nKUprylKhMpSpXycpWuvKVsIylLGdJy1ra8pa4zKUud8nLXvryl8AMpjCHScxiGvOYyEymMpfJzGY685nQjKY0p0nNalrzmtjMpja3yc1uevOb4AynOMdJznKa85zoTKc618nOdrrznfCMpzznSc962vOe+MynPvfJz376858ADahAB0rQghr0oAhNqEIXytCGOvShEI2oRCdK/9GKWvSiGM2oRjfK0Y569KMgDalIR0rS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LDxMXCyCh6qgi5BsZvwMHS09TV0diMywnKDqbO39DR4uPk6+ssu9oL3dXd7u/g4fLz+866C+3jSvv8/f7/9fp549Uwa4EQSIMKHChQwbsgiArsE9ZfkcWryIMaNGjP8QIUzEd3CjyJEkS5qkByOlSgAqWzphcjKmzJk0a4r6uC6kzZ08e/r8mQYnM51Aixo9ijSpCVVEhbJTCjWq1KlUKTYlWjWr1q1cZzL1iLWr2LFky+5LpQqtWlxqzbp9CzeuN4MPnMq9izev3psHQtrdCziw4MF/0B38Szix4sWMtxgmiLix5MmUK++IyDJdWMucO3v+3AHzoVOXRoM+jTq16oILmGiDyXq17Nm0FWM289L0qtq8e/uGe3tott/Eixun2kxzuuPMmzv3GXw3vufUq1vfmDzXtujXu3v/ro/XbvHgy5s/724t+vXs24Pj7j6+/Pn069u/jz+//v38+/v//w9ggAIOSGCBBh6IYIIKLshggw4+CGGEEk5IYYUWXohhhhpuyGGHHn4IYogijkhiiSaeiGKKKq7IYosuvghjjDLOSGONNt6IY4467shjjz7+CGSQQg5JZJFGHolkkkouyWSTTj4JZZRSTklllVZeiWWWWm7JZZdefglmmGKOSWaZZp6JZppqrslmm26+CWeccs5JZ5123olnnnruyWeffv4JaKCCDkpooYYeimiiii7KaKOOPgpppJJOSmmlll6Kaaaabsppp55+Cmqooo5Kaqmmnopqqqquymqrrr4Ka6yyzkprrbbeimuuuu7Ka6++/gpssMIOS2yxxh6LbLLK/y7LbLPOPgtttNJOS2211l6Lbbbabsttt95+C2644o5Lbrnmnotuuuquy2677r4Lb7zyzktvvfbei2+++u7Lb7/+/gtwwAIPTHDBBh+McMIKL1wMWgw/zI96EE/8zlrZUYzxNxaTl3HH02x8scciGwMyfCOfXEvJKK9MzMYsvyyMxDDP7IvDNN+Mc84678xzzz7/DHTQQg9NdNFGH4100kovzXTTTj8NddRST0111VZfjXXWWm/Ndddefw122GKPTXbZZp+Ndtpqr812224D1tLbcmMAUxmwzY03AgPsbcAAivS1Wd5k7+03S4UTXtHfgrPN9xMAFH7A3gQFvjjXkOpXdHkElFd+deN9Rd5a5k9xLnbmiYieGeqJkw626Ke31vcdrIft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mmquyWabbr4JZ5xyzklnnXbeiWeeeu7JZ59+/glooIIOSmihhh6KaKKKLspoo44+Cmmkkk5KaaWWXopppppuymmnnn4Kaqiijkpqqaaeimqqqq7KaquuvgprrLLOSmuttt6Ka6667sprr77+Cmywwg5LbLHGHotsssr/Lstss84+C2200k5LbbXWXottttpuy2233n4Lbrjijktuueaei2666q7LbrvuvgtvvPLOS2+99t6Lb7767stvv/7+C3DAAg9McMEGH4xwwgovzHDDDj8MccQST0xxxRZfjHHGGm/McccefwxyyCKPTHLJJp+Mcsoqr8xyyy6/DHPMMs9Mc80234xzzjrvzHPPPv8MdNBCD0100UYfjXTSV7akdNMpoCFA1LD95nTVFQhwANYBRI31GVRbDbYCXSegddZdfx122smUjcDZab/tQNTVsN02WnCnLcBTdNdt2t14z7U332j7LXTgZPedNeKEN533A4YnrvjiRz9eN+CRnkteNOWJWz445js37vjlmnte+OUGjO426UiPfrrprKves9YstTQ77bTBTrTUXO/Ou+6999457jO/zjrowudud+ucH2908aKbzrzOzi8f/dCpM4B68NXHjHrkr2+P8/Vie689+DCLXzn25Zt/vtcLPG48+9ajD4Dh8cuPvPubK7A+/jJL7TUnsK1//rMZ1ypBm7EVsGq8WyDhFOjAOBQAACH5BAVkAAAALAAAAABABcADhQAAAAAAAP///zoAAAAAOv//29v//5Db///bkP+2ZgA6kJA6AABmtjqQ27ZmAGa2/9uQOraQZjo6AAA6Zjpmtma222aQtmaQ27ZmOtu2ZpC222Gc/wC6OGYAAGY6AAAAZjo6OgA6OtuQZrb/////ttu2kP/b29vb/7bb/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAb/QIBwSCwaj8ikcslsOp/QqHRKrVqv2Kx2y+16v+CweEwum8/otHrNbrvf8Lh8Tq/b7/i8fs/v+/+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wADChxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixgzatzI0ZSAjwIKRJAwBIQFAyAFdFzJsqVLiiATDDhC4ADIlzhz6ty572MC/yU1P/IcSrSo0XEkOgQIQKCCAQAiBwQAoODp0atYs2pVlmBpzSIyAQR4sLWs2bNoZUFYyqDIRwdLG6SdS7eu3UxwA8gdAnKt3ruAAwseDMhvW75v4xJezLix4zMIpH4FADIy0wOPM2vezPlJ3qYoC2SQGuBw59OoUzcugGGpa7FLKVhVTbu27bNRlwpheuG279/AeVp+DTvABBTBkytfTnH4BA0fRUtY+mEE8+vYswsssGBp1ZRQu5fWTr68eXmWg4IHkB7z+ffw44PrGuD7eu5Lycrfz78/NMMpqTREXnv5Z+CBCP5Cn31CCYHfWAlGKOGEsbS3HnuSuUfhhhx2+P/Jg/YNAeJsHpZo4omP0GecBlaV4IFr+qEo44w0CtLaVMW5FgAFNfbo4492iDBTjrwBaeSRSJ4hgAkjuRaCBSckKeWUVFZp5ZVYZqnlllx26eWXYIYp5phklmnmmWimqeaabLbp5ptwxinnnHTWaeedeOap55589unnn4AGKuighBZq6KGIJqrooow26uijkEYq6aSUVmrppZhmqummnHbq6aeghirqqKSWauqpqKaq6qqsturqq7DGKuustNZq66245qrrrrz26uuvwAYr7LDEFmvsscgmq+yyzDbr7LPQRivttNRWa+212Gar7bbcduvtt+CGK+645JZr7rnopqv/7rrstuvuu/DGK++89NZr77345qvvvvz26++/AAcs8MAEF2zwwQgnrPDCDDfs8MMQRyzxxBRXbPHFGGes8cYcd+zxxyCHLPLIJJds8skop6zyyiy37PLLMMcs88w012zzzTjnrPPOPPfs889ABy300EQXbfTRSCet9NJMN+3001BHLfXUVFdt9dVYZ6311lx37fXXYIct9thkl2322WinrfbabLft9ttwxy333HTXbffdeOet99589+3334AHLvjghBdu+OGIJ6744ow37vjjkEcu+eSUV2755ZhnrvnmnHfu+eeghy766KSXbvrpqKeu+uqst+7667DHLvvstNdu//vtuOeu++689+7778AHL/zwxBdv/PHIJ6/88sw37/zz0Ecv/fTUV2/99dhnr/323Hfv/ffghy/++OSXb/756Kev/vrst+/++/DHL//89Ndv//3456///vz37///AAygAAdIwAIa8IAITKACF8jABjrwgRCMoAQnSMEKWvCCGMygBjfIwQ568IMgDKEIR0jCEprwhChMoQpXyMIWuvCFMIyhDGdIwxra8IY4zKEOd8jDHvrwh0AMohCHSMQiGvGISEyiEpfIxCY68YlQjKIUp0jFKlrxiljMoha3yMUuevGLYAyjGMdIxjKa8YxoTKMa18jGNrrxjXCMoxznSMc62v/xjnjMox73yMc++vGPgAykIAdJyEIa8pCITKQiF8nIRjrykZCMpCQnSclKWvKSmMykJjfJyU568pOgDKUoR0nKUprylKhMpSpXycpWuvKVsIylLGdJy1ra8pa4zKUud8nLXvryl8AMpjCHScxiGvOYyEymMpfJzGY685nQjKY0p0nNalrzmtjMpja3yc1uevOb4AynOMdJznKa85zoTKc618nOdrrznfCMpzznSc962vOe+MynPvfJz376858ADahAB0rQghr0oAhNqEIXytCGOvShEI2oRCdK0Ypa9KIYzahGN8rRjnr0oyANqUhHStKSmvSkKE2pSlfK0pa69KX/MI2pTGdK05ra9KY4zalOd8rTnvr0p0ANqlCHStSiGvWoSE2qUpfK1KY69alQjapUp0rVqlr1qljNqla3ytWuevWrYA2rWMdK1rKa9axoTata18rWtrr1rXCNq1znSte62vWueM2rXvfK17769a+ADaxgB0vYwhr2sIhNrGIXy9jGOvaxkI2sZCdL2cpa9rKYzaxmN8vZznr2s6ANrWhHS9rSmva0qE2talfL2ta69rWwja1sZ0vb2tr2trjNrW53y9ve+va3wA2ucIdL3OIa97jITa5yl8vc5jr3udCNrnSnS93qWve62M2udrfL3e5697vgDa94x0ve8pr3vOhN/69618ve9rr3vfCNr3znS9/62ve++M2vfvfL3/76978ADrCAB0zgAhv4wAhOsIIXzOAGO/jBEI6whCdM4Qpb+MIYzrCGN8zhDnv4wyAOsYhHTOISm/jEKE6xilfM4ha7+MUwjrGMZ0zjGtv4xjjOsY53zOMe+/jHQA6ykIdM5CIb+chITrKSl8zkJjv5yVCOspSnTOUqW/nKWM6ylrfM5S57+ctgDrOYx0zmMpv5zGhOs5rXzOY2u/nNcI6znOdM5zrb+c54zrOe98znPvv5z4AOtKAHTehCG/rQiE60ohfN6EY7+tGQjrSkJ03pSlv60pjOtKY3zelOe/rToA61qPBHTepSm/rUqE61qlfN6la7+tWwjrWsZ03rWtv61rjOta53zete+/rXwA62sIdN7GIb+9jITrayl83sZjv72dCOtrSnTe1qW/va2M62trfN7W57+9vgDre4x03ucpv73OhOt7rXze52u/vd8I63vOdN73rb+974zre+983vfvv73wAPuMAHTvCCG/zgCE+4whfO8IY7/OEQj7jEJ07xilv84hjPuMY3zvGOe/zjIA+5yEdO8pKb/OQoT7nKV87ylrv85TCPucxnTvOa2/zmOM+5znfO8577/OdAD7rQh070ohv96EhPutKXzvSmO32VQQAAOw==" /><!-- --> In the
+graph above, we can see how the K-means clustering algorithm works.
+Using the <strong>iris</strong> dataset with only the variables
+<em>Sepal.Length</em> and <em>Petal.Length</em>, we run a K-means
+clustering algorithm. The K-means function clusters the observations
+into 3 clusters using only the variables <em>Sepal.Length</em> and
+<em>Petal.Length</em>. In the first iteration, 3 random observations are
+chosen as the starting points for each of the 3 cluster centroids. Then,
+the distance to each of those 3 cluster centroids is calculated for each
+observation, and each observation is assigned to the closest cluster
+centroid. After the observations have been assigned to a cluster, the
+centroids of each of the three clusters are recalculated using the mean
+of all the observations in that cluster. The distance of each
+observation to the new cluster centroids are recalculated again and the
+process continues until convergence, or until the cluster centroids do
+not change anymore. This occurs after 8 iteration in this example
+above.</p>
 </div>
 
 
